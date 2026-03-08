@@ -177,7 +177,7 @@ export default function ProfilePage() {
     {
       icon: Info,
       label: "About Founder's Bible",
-      action: () => toast("Founder's Bible — Biblical wisdom for builders, leaders, and dreamers. v1.0"),
+      action: () => toast("Founder's Bible — Biblical wisdom for builders, leaders, and dreamers. Built by Mirabelle Morah. v1.0"),
     },
   ];
 
