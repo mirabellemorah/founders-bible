@@ -148,7 +148,67 @@ export default function ProfilePage() {
     { icon: BookOpen, label: "Themes", value: selectedThemes.length.toString(), suffix: "active" },
   ];
 
-  const settings = [
+  const colorPanel = (
+    <div className="bg-card border-2 border-foreground/10 p-4">
+      <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-primary mb-3">Color Mode</p>
+      <div className="grid grid-cols-3 gap-2">
+        {colorModes.map(mode => (
+          <button
+            key={mode.id}
+            onClick={() => handleColorChange(mode.id)}
+            className={`flex flex-col items-center gap-2 p-3 border-2 transition-all ${
+              colorMode === mode.id ? "border-foreground bg-secondary" : "border-border hover:border-foreground/40"
+            }`}
+          >
+            <div className={`w-8 h-8 ${mode.preview}`} />
+            <span className="text-[10px] font-body font-bold uppercase tracking-wider text-foreground">{mode.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const timePanel = (
+    <div className="bg-card border-2 border-foreground/10 p-4">
+      <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-primary mb-3">Daily Reminder Time</p>
+      <div className="flex items-center gap-3">
+        <Clock className="w-4 h-4 text-muted-foreground" />
+        <input type="time" value={notifTime} onChange={e => handleTimeChange(e.target.value)} className="bg-background text-foreground font-body text-sm font-semibold px-3 py-2 border-2 border-border focus:border-primary outline-none transition-colors" />
+        <p className="text-xs font-body text-muted-foreground">Your daily scripture reminder</p>
+      </div>
+      <div className="flex gap-2 mt-3 flex-wrap">
+        {["06:00", "07:00", "08:00", "09:00", "12:00", "21:00"].map(t => (
+          <button key={t} onClick={() => handleTimeChange(t)} className={`px-3 py-1.5 text-[10px] font-body font-bold uppercase tracking-wider border-2 transition-all ${notifTime === t ? "bg-foreground text-background border-foreground" : "bg-transparent text-muted-foreground border-border hover:border-foreground"}`}>
+            {t}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const themesPanel = (
+    <div className="bg-card border-2 border-foreground/10 p-4">
+      <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-primary mb-3">Virtues</p>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {virtueThemes.map(theme => (
+          <button key={theme} onClick={() => toggleTheme(theme)} className={`px-3 py-1.5 text-xs font-body font-bold uppercase tracking-wider border-2 transition-all ${selectedThemes.includes(theme) ? "bg-foreground text-background border-foreground" : "bg-transparent text-muted-foreground border-border hover:border-foreground"}`}>
+            {theme}
+          </button>
+        ))}
+      </div>
+      <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-primary mb-3">Real Talk</p>
+      <div className="flex flex-wrap gap-2">
+        {realTalkThemes.map(theme => (
+          <button key={theme} onClick={() => toggleTheme(theme)} className={`px-3 py-1.5 text-xs font-body font-bold uppercase tracking-wider border-2 transition-all ${selectedThemes.includes(theme) ? "bg-primary text-primary-foreground border-primary" : "bg-transparent text-muted-foreground border-border hover:border-primary"}`}>
+            {theme}
+          </button>
+        ))}
+      </div>
+      <p className="text-[9px] font-body text-muted-foreground mt-3">{selectedThemes.length} themes active</p>
+    </div>
+  );
+
+  const settings: { icon: any; label: string; action: () => void; panel?: { show: boolean; content: React.ReactNode } }[] = [
     {
       icon: Pencil,
       label: "Edit Name",
@@ -158,16 +218,19 @@ export default function ProfilePage() {
       icon: Droplets,
       label: `Color: ${colorModes.find(c => c.id === colorMode)!.label}`,
       action: () => setShowColors(prev => !prev),
+      panel: { show: showColors, content: colorPanel },
     },
     {
       icon: Palette,
       label: "Manage Themes",
       action: () => setShowThemes(prev => !prev),
+      panel: { show: showThemes, content: themesPanel },
     },
     {
       icon: notificationsEnabled ? Bell : BellOff,
       label: notificationsEnabled ? `Notifications · ${notifTime}` : "Notifications Off",
       action: notificationsEnabled ? () => setShowTimePicker(prev => !prev) : toggleNotifications,
+      panel: notificationsEnabled ? { show: showTimePicker, content: timePanel } : undefined,
     },
     {
       icon: darkMode ? Moon : Sun,
