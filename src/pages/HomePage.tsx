@@ -143,6 +143,22 @@ export default function HomePage() {
     }, "image/png");
   };
 
+  const handleLoadMore = async () => {
+    if (!scripture) return;
+    setLoadingMore(true);
+    const nextLevel = expandLevel + 1;
+    const extra = nextLevel * 5;
+    const ref = buildExpandedReference(scripture.book, scripture.chapter, scripture.verse_start, scripture.verse_end, extra);
+    const passage = await fetchBiblePassage(ref);
+    if (passage && passage.verses.length > 0) {
+      setExpandedVerses(passage.verses);
+      setExpandLevel(nextLevel);
+    } else {
+      toast("No more verses available in this range");
+    }
+    setLoadingMore(false);
+  };
+
   const founderName = localStorage.getItem("fb-founder-name") || "Founder";
 
   const greeting = () => {
