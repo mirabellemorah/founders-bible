@@ -190,7 +190,7 @@ export default function HomePage() {
   return (
     <div className="px-5">
       {/* Hero section with giant date */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-6 pb-2 relative overflow-hidden">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-6 pb-2 relative">
         <div className="flex items-end justify-between">
           <div>
             <p className="text-[10px] font-body font-bold uppercase tracking-[0.3em] text-muted-foreground">
