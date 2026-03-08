@@ -15,7 +15,7 @@ export default {
     extend: {
       fontFamily: {
         display: ["Playfair Display", "Georgia", "serif"],
-        body: ["Inter", "system-ui", "sans-serif"],
+        body: ["Space Grotesk", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -67,6 +67,10 @@ export default {
         },
         scripture: "hsl(var(--scripture-bg))",
         "warm-gray": "hsl(var(--warm-gray))",
+        highlight: {
+          DEFAULT: "hsl(var(--highlight))",
+          light: "hsl(var(--highlight-light))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
