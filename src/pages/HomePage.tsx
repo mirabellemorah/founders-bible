@@ -66,7 +66,7 @@ export default function HomePage() {
     ctx.font = "italic 44px Georgia, serif";
     const words = scripture.text.split(" ");
     let lines: string[] = [];
-    let currentLine = """;
+    let currentLine = "\u201C";
     for (const word of words) {
       const test = currentLine + word + " ";
       if (ctx.measureText(test).width > w - 200) {
@@ -76,7 +76,7 @@ export default function HomePage() {
         currentLine = test;
       }
     }
-    lines.push(currentLine.trim() + """);
+    lines.push(currentLine.trim() + "\u201D");
     
     let y = 200;
     for (const line of lines) {
