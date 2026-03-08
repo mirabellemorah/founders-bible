@@ -345,8 +345,8 @@ export default function ProfilePage() {
               </AnimatePresence>
             )}
           </div>
-        ))}
-      </div>
+          );
+        })}
 
       <div className="h-8" />
     </div>
