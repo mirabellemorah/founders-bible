@@ -7,14 +7,16 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background max-w-lg mx-auto relative">
-      {/* Top brand bar */}
+      {/* Top brand bar — editorial style */}
       {!isChat && (
         <div className="px-5 pt-safe">
-          <div className="flex items-center justify-between pt-3 pb-1">
-            <p className="font-display text-[11px] font-bold uppercase tracking-[0.25em] text-foreground">
+          <div className="flex items-center justify-between pt-3 pb-2 border-b-2 border-foreground">
+            <p className="font-display text-xs font-black uppercase tracking-[0.3em] text-foreground">
               Founder's Bible
             </p>
-            <div className="w-2 h-2 rounded-full bg-primary" />
+            <p className="font-body text-[9px] font-medium uppercase tracking-widest text-muted-foreground">
+              Est. 2025
+            </p>
           </div>
         </div>
       )}

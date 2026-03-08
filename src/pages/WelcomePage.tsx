@@ -1,73 +1,131 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, Sparkles, Heart } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export default function WelcomePage() {
   const navigate = useNavigate();
 
-  const features = [
-    { icon: BookOpen, title: "Daily Scripture", desc: "Curated verses for founders" },
-    { icon: Sparkles, title: "AI Reflection", desc: "Personalized spiritual guidance" },
-    { icon: Heart, title: "Save & Grow", desc: "Build your spiritual library" },
-  ];
-
   return (
-    <div className="min-h-screen flex flex-col px-6 pt-safe bg-foreground">
+    <div className="min-h-screen flex flex-col bg-foreground relative overflow-hidden">
+      {/* Giant decorative background text */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+        <motion.p
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 0.03, scale: 1 }}
+          transition={{ duration: 1.5 }}
+          className="font-display text-[280px] font-black text-background leading-none whitespace-nowrap"
+        >
+          FAITH
+        </motion.p>
+      </div>
+
+      {/* Top editorial header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="px-6 pt-safe"
+      >
+        <div className="flex items-center justify-between pt-4 pb-3 border-b border-background/10">
+          <p className="font-display text-[10px] font-black uppercase tracking-[0.3em] text-background/60">
+            Founder's Bible
+          </p>
+          <p className="font-body text-[9px] uppercase tracking-widest text-background/30">
+            Vol. I
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col justify-center px-6 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+        >
+          {/* Giant number decoration */}
+          <motion.p
+            initial={{ opacity: 0, x: -40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5 }}
+            className="font-display text-[120px] font-black leading-none text-primary -mb-6"
+          >
+            01
+          </motion.p>
+
+          <h1 className="font-display text-6xl font-black text-background leading-[0.9] tracking-tight">
+            BUILD
+            <br />
+            <span className="italic font-normal text-primary">with</span>
+            <br />
+            PURPOSE
+          </h1>
+
+          <div className="mt-6 flex items-start gap-4">
+            <div className="w-12 h-0.5 bg-primary mt-3 shrink-0" />
+            <p className="text-background/50 font-body text-sm leading-relaxed max-w-[240px]">
+              Biblical wisdom for builders, leaders, and dreamers who refuse to build without meaning.
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Feature pills — collage style */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="mt-10 flex flex-wrap gap-2"
+        >
+          {["Daily Scripture", "AI Reflections", "Save & Grow", "Real Talk"].map((f, i) => (
+            <motion.span
+              key={f}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9 + i * 0.1 }}
+              className={`px-4 py-2 text-xs font-body font-bold uppercase tracking-wider border ${
+                i === 0
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-transparent text-background/70 border-background/20"
+              }`}
+            >
+              {f}
+            </motion.span>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Bottom CTA */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="flex-1 flex flex-col justify-center items-center text-center"
+        transition={{ delay: 1.2 }}
+        className="px-6 pb-10"
       >
-        {/* Logo mark */}
-        <div className="w-3 h-3 rounded-full bg-primary mb-8" />
-
-        <h1 className="font-display text-5xl font-black tracking-tight text-background leading-[1.1]">
-          Founder's<br />
-          <span className="italic text-primary">Bible</span>
-        </h1>
-
-        <p className="mt-5 text-background/60 font-body text-sm leading-relaxed max-w-[260px]">
-          Biblical wisdom for builders, leaders, and dreamers who build with purpose.
-        </p>
-
-        <div className="mt-14 w-full space-y-3">
-          {features.map(({ icon: Icon, title, desc }, i) => (
-            <motion.div
-              key={title}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 + i * 0.15 }}
-              className="flex items-center gap-4 bg-background/5 border border-background/10 rounded-xl px-4 py-3.5 text-left"
-            >
-              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
-                <Icon className="w-5 h-5 text-primary" strokeWidth={1.5} />
-              </div>
-              <div>
-                <p className="font-display text-sm font-semibold text-background">{title}</p>
-                <p className="text-xs text-background/50 font-body">{desc}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.9 }}
+        <button
           onClick={() => {
             localStorage.setItem("fb-onboarded", "true");
             navigate("/");
           }}
-          className="mt-10 w-full py-4 rounded-2xl bg-primary text-primary-foreground font-body font-semibold text-sm tracking-wide active:scale-[0.98] transition-transform"
+          className="w-full flex items-center justify-between py-5 px-6 bg-primary text-primary-foreground font-body font-bold text-sm uppercase tracking-widest active:scale-[0.98] transition-transform group"
         >
           Begin Your Journey
-        </motion.button>
-
-        <p className="mt-4 mb-8 text-xs text-background/40 font-body">
+          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+        </button>
+        <p className="mt-3 text-center text-[10px] text-background/30 font-body uppercase tracking-widest">
           Free · No account required
         </p>
       </motion.div>
+
+      {/* Scrolling marquee at bottom */}
+      <div className="overflow-hidden border-t border-background/10 py-2">
+        <div className="animate-marquee flex whitespace-nowrap">
+          {Array(4).fill("SCRIPTURE · WISDOM · COURAGE · FAITH · PURPOSE · ").map((t, i) => (
+            <span key={i} className="font-body text-[10px] font-bold uppercase tracking-[0.4em] text-background/10 mx-4">
+              {t}
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

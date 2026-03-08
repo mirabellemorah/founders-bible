@@ -33,10 +33,12 @@ export default function HomePage() {
 
   const greeting = () => {
     const h = new Date().getHours();
-    if (h < 12) return "Good morning";
-    if (h < 17) return "Good afternoon";
-    return "Good evening";
+    if (h < 12) return "Morning";
+    if (h < 17) return "Afternoon";
+    return "Evening";
   };
+
+  const dayNum = new Date().getDate().toString().padStart(2, "0");
 
   if (loading) {
     return (
@@ -56,98 +58,141 @@ export default function HomePage() {
 
   return (
     <div className="px-5">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-4 pb-2">
-        <p className="text-xs font-body text-muted-foreground tracking-widest uppercase">{greeting()}</p>
-        <h1 className="font-display text-3xl font-bold mt-1 text-foreground leading-tight">
-          Today's <span className="italic text-primary">Word</span>
-        </h1>
+      {/* Hero section with giant date */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-6 pb-2 relative">
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-[10px] font-body font-bold uppercase tracking-[0.3em] text-muted-foreground">
+              {greeting()} · Today's Word
+            </p>
+            <h1 className="font-display text-5xl font-black mt-1 text-foreground leading-[0.9] tracking-tight">
+              THE
+              <br />
+              <span className="italic text-primary">WORD</span>
+            </h1>
+          </div>
+          {/* Giant decorative day number */}
+          <motion.p
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 0.08, x: 0 }}
+            className="font-display text-[140px] font-black leading-none text-foreground -mr-2 -mb-4 select-none pointer-events-none"
+          >
+            {dayNum}
+          </motion.p>
+        </div>
       </motion.div>
 
+      {/* Scripture card — editorial black */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="mt-4 bg-foreground rounded-2xl p-6 relative overflow-hidden"
+        className="mt-2 bg-foreground p-6 relative overflow-hidden border-l-4 border-primary"
       >
-        {/* Decorative element */}
-        <div className="absolute top-4 right-4 text-[120px] font-display font-black text-background/5 leading-none select-none pointer-events-none">
+        {/* Giant decorative quote */}
+        <div className="absolute -top-8 -right-4 text-[200px] font-display font-black text-background/[0.03] leading-none select-none pointer-events-none">
           "
         </div>
 
         <div className="flex items-center gap-2 mb-5">
-          <span className="px-3 py-1 rounded-full bg-primary text-xs font-body font-medium text-primary-foreground tracking-wide">
+          <span className="px-3 py-1 bg-primary text-[10px] font-body font-bold uppercase tracking-wider text-primary-foreground">
             {scripture.theme}
           </span>
-          <span className="px-3 py-1 rounded-full bg-background/10 text-xs font-body text-background/70">
+          <span className="px-3 py-1 border border-background/20 text-[10px] font-body font-bold uppercase tracking-wider text-background/50">
             {scripture.translation}
           </span>
         </div>
 
-        <blockquote className="font-display text-xl leading-relaxed text-background italic relative z-10">
+        <blockquote className="font-display text-2xl leading-snug text-background italic relative z-10 font-medium">
           "{scripture.text}"
         </blockquote>
 
-        <p className="mt-4 font-body text-sm font-semibold text-primary">— {scripture.reference}</p>
+        <div className="mt-5 flex items-center gap-3">
+          <div className="w-8 h-0.5 bg-primary" />
+          <p className="font-body text-xs font-bold uppercase tracking-widest text-primary">
+            {scripture.reference}
+          </p>
+        </div>
 
-        <div className="my-5 h-px bg-background/10" />
+        <div className="my-6 h-px bg-background/10" />
 
         <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
-            <BookOpen className="w-4 h-4 text-primary" strokeWidth={1.5} />
+          <div className="w-8 h-8 bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+            <BookOpen className="w-4 h-4 text-primary" strokeWidth={2} />
           </div>
           <div>
-            <p className="text-xs font-body font-medium text-background/50 uppercase tracking-widest mb-1.5">Reflection</p>
-            <p className="text-sm font-body leading-relaxed text-background/80">{scripture.reflection}</p>
+            <p className="text-[10px] font-body font-bold text-background/40 uppercase tracking-[0.2em] mb-1.5">
+              Founder's Reflection
+            </p>
+            <p className="text-sm font-body leading-relaxed text-background/75">{scripture.reflection}</p>
           </div>
         </div>
 
-        <div className="flex gap-3 mt-6">
+        <div className="flex gap-2 mt-6">
           <button
             onClick={() => {
               toggle(scripture.id);
               toast.success(saved ? "Removed from saved" : "Saved to favorites");
             }}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-body text-sm font-medium transition-colors ${
-              saved ? "bg-primary text-primary-foreground" : "bg-background/10 text-background"
+            className={`flex-1 flex items-center justify-center gap-2 py-3.5 font-body text-xs font-bold uppercase tracking-wider transition-all ${
+              saved
+                ? "bg-primary text-primary-foreground"
+                : "border border-background/20 text-background hover:border-primary hover:text-primary"
             }`}
           >
-            <Bookmark className="w-4 h-4" fill={saved ? "currentColor" : "none"} strokeWidth={1.5} />
+            <Bookmark className="w-4 h-4" fill={saved ? "currentColor" : "none"} strokeWidth={2} />
             {saved ? "Saved" : "Save"}
           </button>
           <button
             onClick={handleShare}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-background/10 text-background font-body text-sm font-medium"
+            className="flex-1 flex items-center justify-center gap-2 py-3.5 border border-background/20 text-background font-body text-xs font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
           >
-            <Share2 className="w-4 h-4" strokeWidth={1.5} />
+            <Share2 className="w-4 h-4" strokeWidth={2} />
             Share
           </button>
         </div>
       </motion.div>
 
+      {/* Themes section — editorial grid */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
         className="mt-8 mb-6"
       >
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-lg font-bold text-foreground">Explore Themes</h2>
-          <Link to="/library" className="text-xs font-body font-medium text-primary flex items-center gap-1">
+        <div className="flex items-center justify-between mb-4 border-b-2 border-foreground pb-2">
+          <h2 className="font-display text-xs font-black uppercase tracking-[0.2em] text-foreground">Explore Themes</h2>
+          <Link to="/library" className="text-[10px] font-body font-bold uppercase tracking-wider text-primary flex items-center gap-1 hover:gap-2 transition-all">
             View all <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
         <div className="flex gap-2 flex-wrap">
-          {["Leadership", "Fear", "Money", "Courage", "Negotiation", "Failure"].map((t) => (
+          {["Leadership", "Fear", "Money", "Courage", "Negotiation", "Failure"].map((t, i) => (
             <Link
               key={t}
               to={`/library?theme=${t}`}
-              className="px-4 py-2 rounded-full bg-card border border-border text-xs font-body font-medium text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+              className={`px-4 py-2.5 text-[11px] font-body font-bold uppercase tracking-wider transition-all border-2 ${
+                i === 0
+                  ? "bg-foreground text-background border-foreground hover:bg-primary hover:border-primary"
+                  : "bg-transparent text-foreground border-foreground/20 hover:border-primary hover:text-primary"
+              }`}
             >
               {t}
             </Link>
           ))}
         </div>
       </motion.div>
+
+      {/* Decorative bottom element */}
+      <div className="mb-4 overflow-hidden">
+        <div className="animate-marquee flex whitespace-nowrap py-2 border-t border-border">
+          {Array(4).fill("SCRIPTURE · WISDOM · COURAGE · FAITH · PURPOSE · ").map((t, i) => (
+            <span key={i} className="font-body text-[9px] font-bold uppercase tracking-[0.4em] text-muted-foreground/30 mx-4">
+              {t}
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

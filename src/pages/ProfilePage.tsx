@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { User, BookOpen, Flame, Heart, ChevronRight, Moon, Sun, Bell, BellOff, Info } from "lucide-react";
+import { User, BookOpen, Flame, Heart, Moon, Sun, Bell, BellOff, Info, ArrowRight } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { themes } from "@/data/scriptures";
 import { toast } from "sonner";
@@ -41,7 +41,6 @@ export default function ProfilePage() {
     }
   };
 
-  // Calculate streak from localStorage
   const streak = (() => {
     const lastVisit = localStorage.getItem("fb-last-visit");
     const streakCount = parseInt(localStorage.getItem("fb-streak") || "1");
@@ -57,9 +56,9 @@ export default function ProfilePage() {
   })();
 
   const stats = [
-    { icon: Flame, label: "Day Streak", value: streak.toString() },
-    { icon: Heart, label: "Saved", value: favorites.length.toString() },
-    { icon: BookOpen, label: "Themes", value: themes.length.toString() },
+    { icon: Flame, label: "Streak", value: streak.toString(), suffix: "days" },
+    { icon: Heart, label: "Saved", value: favorites.length.toString(), suffix: "verses" },
+    { icon: BookOpen, label: "Themes", value: themes.length.toString(), suffix: "topics" },
   ];
 
   const settings = [
@@ -82,46 +81,62 @@ export default function ProfilePage() {
 
   return (
     <div className="px-5">
-      <div className="pt-4 pb-2">
-        <h1 className="font-display text-3xl font-bold text-foreground">
-          Pro<span className="italic text-primary">file</span>
+      {/* Hero */}
+      <div className="pt-6 pb-4 relative">
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.05 }}
+          className="absolute -top-2 right-0 font-display text-[100px] font-black text-foreground leading-none select-none pointer-events-none"
+        >
+          YOU
+        </motion.p>
+        <h1 className="font-display text-5xl font-black text-foreground leading-[0.9] tracking-tight relative z-10">
+          YOUR
+          <br />
+          <span className="italic text-primary">PROFILE</span>
         </h1>
       </div>
 
+      {/* Avatar area */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mt-4 flex flex-col items-center"
+        className="mt-2 flex items-center gap-4 p-4 bg-foreground"
       >
-        <div className="w-20 h-20 rounded-full bg-foreground flex items-center justify-center">
-          <User className="w-8 h-8 text-background" strokeWidth={1.5} />
+        <div className="w-16 h-16 bg-primary flex items-center justify-center shrink-0">
+          <User className="w-7 h-7 text-primary-foreground" strokeWidth={2} />
         </div>
-        <p className="mt-3 font-display text-lg font-bold text-foreground">Founder</p>
-        <p className="text-xs font-body text-muted-foreground">Building with faith</p>
+        <div>
+          <p className="font-display text-lg font-black text-background tracking-tight">FOUNDER</p>
+          <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-background/50">Building with faith</p>
+        </div>
       </motion.div>
 
-      <div className="mt-6 grid grid-cols-3 gap-3">
-        {stats.map(({ icon: Icon, label, value }) => (
-          <div key={label} className="bg-card border border-border rounded-xl p-3 text-center">
-            <Icon className="w-5 h-5 text-primary mx-auto mb-1" strokeWidth={1.5} />
-            <p className="font-display text-xl font-bold text-foreground">{value}</p>
-            <p className="text-[10px] font-body text-muted-foreground">{label}</p>
+      {/* Stats — big bold numbers */}
+      <div className="mt-4 grid grid-cols-3 gap-1">
+        {stats.map(({ icon: Icon, label, value, suffix }) => (
+          <div key={label} className="bg-card border-2 border-foreground/10 p-4 text-center">
+            <Icon className="w-4 h-4 text-primary mx-auto mb-2" strokeWidth={2} />
+            <p className="font-display text-3xl font-black text-foreground leading-none">{value}</p>
+            <p className="text-[9px] font-body font-bold uppercase tracking-[0.2em] text-muted-foreground mt-1">{suffix}</p>
           </div>
         ))}
       </div>
 
-      <div className="mt-6 space-y-2">
+      {/* Settings */}
+      <div className="mt-5 space-y-1">
+        <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-muted-foreground mb-2 px-1">Settings</p>
         {settings.map(({ icon: Icon, label, action }) => (
           <button
             key={label}
             onClick={action}
-            className="w-full flex items-center justify-between px-4 py-3.5 rounded-xl bg-card border border-border hover:bg-secondary transition-colors"
+            className="w-full flex items-center justify-between px-4 py-4 bg-card border-b border-border hover:bg-secondary transition-colors group"
           >
             <div className="flex items-center gap-3">
-              <Icon className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
-              <span className="text-sm font-body font-medium text-foreground">{label}</span>
+              <Icon className="w-4 h-4 text-muted-foreground" strokeWidth={2} />
+              <span className="text-sm font-body font-semibold text-foreground">{label}</span>
             </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
+            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" strokeWidth={2} />
           </button>
         ))}
       </div>
