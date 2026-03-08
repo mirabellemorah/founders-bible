@@ -206,7 +206,7 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 0.08, x: 0 }}
-            className="overflow-hidden sm:overflow-visible -mr-2 -mb-4 select-none pointer-events-none"
+            className="hidden sm:block overflow-visible -mr-2 -mb-4 select-none pointer-events-none"
           >
             <p className="font-display text-[140px] font-black leading-none text-foreground">
               {dayNum}
