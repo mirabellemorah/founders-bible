@@ -93,24 +93,14 @@ export default function ProfilePage() {
     toast.success(next ? "Dark mode enabled" : "Light mode enabled");
   };
 
-  const toggleNotifications = async () => {
-    if (!notificationsEnabled) {
-      if ("Notification" in window) {
-        const perm = await Notification.requestPermission();
-        if (perm === "granted") {
-          setNotificationsEnabled(true);
-          localStorage.setItem("fb-notifications", "true");
-          setShowTimePicker(true);
-          toast.success("Notifications enabled");
-        } else {
-          toast.error("Permission denied");
-        }
-      } else {
-        toast.error("Notifications not supported");
-      }
+  const toggleNotifications = () => {
+    const next = !notificationsEnabled;
+    setNotificationsEnabled(next);
+    localStorage.setItem("fb-notifications", next ? "true" : "false");
+    if (next) {
+      setShowTimePicker(true);
+      toast.success("Notifications enabled");
     } else {
-      setNotificationsEnabled(false);
-      localStorage.setItem("fb-notifications", "false");
       setShowTimePicker(false);
       toast.success("Notifications disabled");
     }
