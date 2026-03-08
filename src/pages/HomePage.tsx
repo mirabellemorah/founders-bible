@@ -236,9 +236,10 @@ export default function HomePage() {
           </span>
         </div>
 
-        <blockquote className="font-display text-2xl leading-snug text-background italic relative z-10 font-medium">
+        <blockquote className="font-display text-xl leading-snug text-background italic relative z-10 font-medium">
           "{scripture.text}"
         </blockquote>
+
 
         {/* Expanded verses from Bible API */}
         <AnimatePresence>
