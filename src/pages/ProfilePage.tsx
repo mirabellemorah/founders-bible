@@ -347,6 +347,7 @@ export default function ProfilePage() {
           </div>
           );
         })}
+      </div>
 
       <div className="h-8" />
     </div>
