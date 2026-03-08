@@ -169,6 +169,7 @@ export default function HomePage() {
   };
 
   const dayNum = new Date().getDate().toString().padStart(2, "0");
+  const monthShort = new Date().toLocaleString("default", { month: "short" }).toUpperCase();
 
   if (loading) {
     return (
