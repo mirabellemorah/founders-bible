@@ -169,6 +169,7 @@ export default function HomePage() {
   };
 
   const dayNum = new Date().getDate().toString().padStart(2, "0");
+  const monthShort = new Date().toLocaleString("default", { month: "short" }).toUpperCase();
 
   if (loading) {
     return (
@@ -189,7 +190,7 @@ export default function HomePage() {
   return (
     <div className="px-5">
       {/* Hero section with giant date */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-6 pb-2 relative">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-6 pb-2 relative overflow-hidden">
         <div className="flex items-end justify-between">
           <div>
             <p className="text-[10px] font-body font-bold uppercase tracking-[0.3em] text-muted-foreground">
@@ -202,13 +203,18 @@ export default function HomePage() {
             </h1>
           </div>
           {/* Giant decorative day number */}
-          <motion.p
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 0.08, x: 0 }}
-            className="font-display text-[140px] font-black leading-none text-foreground -mr-2 -mb-4 select-none pointer-events-none"
+            className="flex flex-col items-end -mr-2 -mb-4 select-none pointer-events-none"
           >
-            {dayNum}
-          </motion.p>
+            <p className="font-display text-[100px] sm:text-[140px] font-black leading-none text-foreground">
+              {dayNum}
+            </p>
+            <p className="font-display text-lg font-bold text-foreground -mt-2 mr-1">
+              {monthShort}
+            </p>
+          </motion.div>
         </div>
       </motion.div>
 

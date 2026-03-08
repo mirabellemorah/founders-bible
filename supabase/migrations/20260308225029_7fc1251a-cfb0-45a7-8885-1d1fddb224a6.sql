@@ -1,0 +1,1 @@
+CREATE POLICY "Anyone can insert daily scripture" ON public.daily_scripture FOR INSERT WITH CHECK (true);
