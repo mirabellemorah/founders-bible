@@ -138,7 +138,7 @@ export default function LibraryPage() {
           <span className="italic text-primary">LIBRARY</span>
         </h1>
         <p className="text-[10px] font-body font-bold uppercase tracking-[0.3em] text-muted-foreground mt-3">
-          {themes.length} themes · Browse scripture
+          Themes · Browse scripture
         </p>
       </div>
 
