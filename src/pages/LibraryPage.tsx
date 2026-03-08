@@ -196,7 +196,7 @@ export default function LibraryPage() {
       <div className="flex gap-0 mb-5 border-b-2 border-foreground">
         {[
           { key: "themes" as const, label: "Themes" },
-          { key: "bible" as const, label: "Full Bible" },
+          { key: "bible" as const, label: "Popular Books" },
         ].map(({ key, label }) => (
           <button
             key={key}
