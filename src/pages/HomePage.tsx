@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Bookmark, Share2, BookOpen, Loader2, ArrowRight } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Bookmark, Share2, BookOpen, Loader2, ArrowRight, Image, X } from "lucide-react";
 import { fetchDailyScripture, type Scripture } from "@/data/scriptures";
 import { useFavorites } from "@/hooks/useFavorites";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ export default function HomePage() {
   const [scripture, setScripture] = useState<Scripture | null>(null);
   const [loading, setLoading] = useState(true);
   const { toggle, isFavorite } = useFavorites();
+  const [showShareOptions, setShowShareOptions] = useState(false);
 
   useEffect(() => {
     fetchDailyScripture().then((s) => {
@@ -20,7 +21,7 @@ export default function HomePage() {
 
   const saved = scripture ? isFavorite(scripture.id) : false;
 
-  const handleShare = async () => {
+  const handleShareText = async () => {
     if (!scripture) return;
     const text = `"${scripture.text}"\n— ${scripture.reference}\n\nvia Founder's Bible`;
     if (navigator.share) {
@@ -29,6 +30,110 @@ export default function HomePage() {
       await navigator.clipboard.writeText(text);
       toast.success("Copied to clipboard");
     }
+    setShowShareOptions(false);
+  };
+
+  const handleShareImage = async (bg: "dark" | "cream") => {
+    if (!scripture) return;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d")!;
+    const w = 1080;
+    const h = 1350;
+    canvas.width = w;
+    canvas.height = h;
+
+    // Background
+    ctx.fillStyle = bg === "dark" ? "#1a1a1a" : "#f9f8f0";
+    ctx.fillRect(0, 0, w, h);
+
+    const textColor = bg === "dark" ? "#f9f8f0" : "#1a1a1a";
+    const mutedColor = bg === "dark" ? "rgba(249,248,240,0.4)" : "rgba(26,26,26,0.4)";
+    const accentColor = bg === "dark" ? "#e85d5d" : "#c44040";
+
+    // Accent bar
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(80, 80, 6, 120);
+
+    // Theme badge
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(110, 80, ctx.measureText(scripture.theme.toUpperCase()).width + 40, 36);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 16px sans-serif";
+    ctx.fillText(scripture.theme.toUpperCase(), 130, 104);
+
+    // Quote
+    ctx.fillStyle = textColor;
+    ctx.font = "italic 44px Georgia, serif";
+    const words = scripture.text.split(" ");
+    let lines: string[] = [];
+    let currentLine = """;
+    for (const word of words) {
+      const test = currentLine + word + " ";
+      if (ctx.measureText(test).width > w - 200) {
+        lines.push(currentLine.trim());
+        currentLine = word + " ";
+      } else {
+        currentLine = test;
+      }
+    }
+    lines.push(currentLine.trim() + """);
+    
+    let y = 200;
+    for (const line of lines) {
+      ctx.fillText(line, 110, y);
+      y += 60;
+    }
+
+    // Reference
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(110, y + 20, 60, 3);
+    ctx.font = "bold 20px sans-serif";
+    ctx.letterSpacing = "4px";
+    ctx.fillText(scripture.reference.toUpperCase(), 190, y + 28);
+
+    // Reflection
+    ctx.fillStyle = mutedColor;
+    ctx.font = "18px sans-serif";
+    const refWords = scripture.reflection.split(" ");
+    let refLines: string[] = [];
+    let refLine = "";
+    for (const word of refWords) {
+      const test = refLine + word + " ";
+      if (ctx.measureText(test).width > w - 220) {
+        refLines.push(refLine.trim());
+        refLine = word + " ";
+      } else {
+        refLine = test;
+      }
+    }
+    refLines.push(refLine.trim());
+    let ry = y + 80;
+    for (const line of refLines) {
+      ctx.fillText(line, 110, ry);
+      ry += 28;
+    }
+
+    // Branding
+    ctx.fillStyle = mutedColor;
+    ctx.font = "bold 14px sans-serif";
+    ctx.fillText("FOUNDER'S BIBLE", 110, h - 80);
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      const file = new File([blob], "founders-bible-verse.png", { type: "image/png" });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], text: `"${scripture.text}" — ${scripture.reference}` });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "founders-bible-verse.png";
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("Image downloaded");
+      }
+      setShowShareOptions(false);
+    }, "image/png");
   };
 
   const founderName = localStorage.getItem("fb-founder-name") || "Founder";
