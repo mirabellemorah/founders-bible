@@ -15,7 +15,7 @@ export function AppLayout() {
               Founder's Bible
             </p>
             <p className="font-body text-[9px] font-medium uppercase tracking-widest text-muted-foreground">
-              Est. 2025
+              {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase()}
             </p>
           </div>
         </div>
