@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Bookmark, Share2, X, Image } from "lucide-react";
 import { toast } from "sonner";
 import { useFavorites } from "@/hooks/useFavorites";
+import { getSavedHighlights, toggleHighlight, type SavedHighlight } from "@/lib/highlights";
 
 interface VerseActionBarProps {
   verseText: string;
@@ -12,15 +14,26 @@ interface VerseActionBarProps {
 
 export default function VerseActionBar({ verseText, reference, scriptureId, onClose }: VerseActionBarProps) {
   const { toggle, isFavorite } = useFavorites();
-  const saved = scriptureId ? isFavorite(scriptureId) : false;
+  const [highlightSaved, setHighlightSaved] = useState(false);
+
+  useEffect(() => {
+    if (!scriptureId) {
+      const highlights = getSavedHighlights();
+      setHighlightSaved(highlights.some(h => h.reference === reference && h.text === verseText));
+    }
+  }, [scriptureId, reference, verseText]);
+
+  const saved = scriptureId ? isFavorite(scriptureId) : highlightSaved;
 
   const handleSave = () => {
-    if (!scriptureId) {
-      toast.info("This verse can only be shared");
-      return;
+    if (scriptureId) {
+      toggle(scriptureId);
+      toast.success(saved ? "Removed from saved" : "Saved to favorites");
+    } else {
+      toggleHighlight({ text: verseText, reference });
+      setHighlightSaved(!highlightSaved);
+      toast.success(highlightSaved ? "Removed from saved" : "Saved to highlights");
     }
-    toggle(scriptureId);
-    toast.success(saved ? "Removed from saved" : "Saved to favorites");
   };
 
   const handleShareText = async () => {
