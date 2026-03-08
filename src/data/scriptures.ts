@@ -20,6 +20,18 @@ export const themes = [
   "Strength",
   "Peace",
   "Integrity",
+  "Fear",
+  "Money",
+  "Negotiation",
+  "Anxiety",
+  "Failure",
+  "Anger",
+  "Jealousy",
+  "Loneliness",
+  "Doubt",
+  "Greed",
+  "Pride",
+  "Suffering",
 ] as const;
 
 export type Theme = (typeof themes)[number];
@@ -56,7 +68,6 @@ export async function fetchScripturesByTheme(theme: string): Promise<Scripture[]
 export async function fetchDailyScripture(): Promise<Scripture | null> {
   const today = new Date().toISOString().split("T")[0];
 
-  // Check if we have a daily scripture for today
   const { data: daily } = await supabase
     .from("daily_scripture")
     .select("scripture_id")
@@ -72,7 +83,6 @@ export async function fetchDailyScripture(): Promise<Scripture | null> {
     return data;
   }
 
-  // Pick a scripture based on day of year for consistency
   const { data: allScriptures } = await supabase
     .from("scriptures")
     .select("*");
