@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { User, BookOpen, Flame, Heart, ChevronRight } from "lucide-react";
-import { scriptures } from "@/data/scriptures";
 import { useFavorites } from "@/hooks/useFavorites";
 
 export default function ProfilePage() {
@@ -9,18 +8,15 @@ export default function ProfilePage() {
   const stats = [
     { icon: Flame, label: "Day Streak", value: "1" },
     { icon: Heart, label: "Saved", value: favorites.length.toString() },
-    { icon: BookOpen, label: "Verses Read", value: Math.min(scriptures.length, 3).toString() },
+    { icon: BookOpen, label: "Themes", value: "8" },
   ];
 
   return (
     <div className="px-5 pt-safe">
       <div className="pt-6 pb-2">
-        <h1 className="font-display text-2xl font-semibold text-foreground">
-          Profile
-        </h1>
+        <h1 className="font-display text-2xl font-semibold text-foreground">Profile</h1>
       </div>
 
-      {/* Avatar */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -33,7 +29,6 @@ export default function ProfilePage() {
         <p className="text-xs font-body text-muted-foreground">Building with faith</p>
       </motion.div>
 
-      {/* Stats */}
       <div className="mt-6 grid grid-cols-3 gap-3">
         {stats.map(({ icon: Icon, label, value }) => (
           <div key={label} className="bg-card border border-border rounded-xl p-3 text-center">
@@ -44,7 +39,6 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* Menu */}
       <div className="mt-6 space-y-2">
         {["Notification Settings", "Reading Preferences", "About Founders Bible"].map((item) => (
           <button
