@@ -93,24 +93,14 @@ export default function ProfilePage() {
     toast.success(next ? "Dark mode enabled" : "Light mode enabled");
   };
 
-  const toggleNotifications = async () => {
-    if (!notificationsEnabled) {
-      if ("Notification" in window) {
-        const perm = await Notification.requestPermission();
-        if (perm === "granted") {
-          setNotificationsEnabled(true);
-          localStorage.setItem("fb-notifications", "true");
-          setShowTimePicker(true);
-          toast.success("Notifications enabled");
-        } else {
-          toast.error("Permission denied");
-        }
-      } else {
-        toast.error("Notifications not supported");
-      }
+  const toggleNotifications = () => {
+    const next = !notificationsEnabled;
+    setNotificationsEnabled(next);
+    localStorage.setItem("fb-notifications", next ? "true" : "false");
+    if (next) {
+      setShowTimePicker(true);
+      toast.success("Notifications enabled");
     } else {
-      setNotificationsEnabled(false);
-      localStorage.setItem("fb-notifications", "false");
       setShowTimePicker(false);
       toast.success("Notifications disabled");
     }
@@ -229,7 +219,7 @@ export default function ProfilePage() {
     {
       icon: notificationsEnabled ? Bell : BellOff,
       label: notificationsEnabled ? `Notifications · ${notifTime}` : "Notifications Off",
-      action: notificationsEnabled ? () => setShowTimePicker(prev => !prev) : toggleNotifications,
+      action: toggleNotifications,
       panel: notificationsEnabled ? { show: showTimePicker, content: timePanel } : undefined,
     },
     {
@@ -321,7 +311,9 @@ export default function ProfilePage() {
       <div className="mt-5">
         <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-muted-foreground mb-2 px-1">Settings</p>
         
-        {settings.map(({ icon: Icon, label, action, panel }) => (
+        {settings.map(({ icon: Icon, label, action, panel }) => {
+          const isOpen = panel?.show ?? false;
+          return (
           <div key={label}>
             <button
               onClick={action}
@@ -331,7 +323,12 @@ export default function ProfilePage() {
                 <Icon className="w-4 h-4 text-muted-foreground" strokeWidth={2} />
                 <span className="text-sm font-body font-semibold text-foreground">{label}</span>
               </div>
-              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" strokeWidth={2} />
+              <motion.div
+                animate={{ rotate: isOpen ? 90 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" strokeWidth={2} />
+              </motion.div>
             </button>
             {panel && (
               <AnimatePresence>
@@ -348,7 +345,8 @@ export default function ProfilePage() {
               </AnimatePresence>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="h-8" />
