@@ -68,6 +68,7 @@ export async function fetchScripturesByTheme(theme: string): Promise<Scripture[]
 export async function fetchDailyScripture(): Promise<Scripture | null> {
   const today = new Date().toISOString().split("T")[0];
 
+  // Check if we already have a scripture assigned for today
   const { data: daily } = await supabase
     .from("daily_scripture")
     .select("scripture_id")
@@ -83,6 +84,7 @@ export async function fetchDailyScripture(): Promise<Scripture | null> {
     return data;
   }
 
+  // No scripture for today: pick one deterministically and save it
   const { data: allScriptures } = await supabase
     .from("scriptures")
     .select("*");
@@ -92,7 +94,16 @@ export async function fetchDailyScripture(): Promise<Scripture | null> {
   const dayOfYear = Math.floor(
     (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
   );
-  return allScriptures[dayOfYear % allScriptures.length];
+  const selected = allScriptures[dayOfYear % allScriptures.length];
+
+  // Insert into daily_scripture so it stays consistent for the whole day
+  await supabase
+    .from("daily_scripture")
+    .insert({ date: today, scripture_id: selected.id })
+    .select()
+    .maybeSingle();
+
+  return selected;
 }
 
 export async function fetchFavorites(): Promise<string[]> {
