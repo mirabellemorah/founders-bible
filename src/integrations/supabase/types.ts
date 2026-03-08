@@ -14,7 +14,109 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      daily_scripture: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          scripture_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          scripture_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          scripture_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_scripture_scripture_id_fkey"
+            columns: ["scripture_id"]
+            isOneToOne: false
+            referencedRelation: "scriptures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      favorites: {
+        Row: {
+          created_at: string
+          device_id: string | null
+          id: string
+          scripture_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          scripture_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          scripture_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_scripture_id_fkey"
+            columns: ["scripture_id"]
+            isOneToOne: false
+            referencedRelation: "scriptures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scriptures: {
+        Row: {
+          book: string
+          chapter: number
+          created_at: string
+          id: string
+          reference: string
+          reflection: string
+          text: string
+          theme: string
+          translation: string
+          verse_end: number | null
+          verse_start: number
+        }
+        Insert: {
+          book: string
+          chapter: number
+          created_at?: string
+          id?: string
+          reference: string
+          reflection: string
+          text: string
+          theme: string
+          translation?: string
+          verse_end?: number | null
+          verse_start: number
+        }
+        Update: {
+          book?: string
+          chapter?: number
+          created_at?: string
+          id?: string
+          reference?: string
+          reflection?: string
+          text?: string
+          theme?: string
+          translation?: string
+          verse_end?: number | null
+          verse_start?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
