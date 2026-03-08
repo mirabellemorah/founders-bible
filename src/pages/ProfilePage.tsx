@@ -1,12 +1,41 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, BookOpen, Flame, Heart, Moon, Sun, Bell, BellOff, Info, ArrowRight, Pencil, Check, X, Palette } from "lucide-react";
+import { User, BookOpen, Flame, Heart, Moon, Sun, Bell, BellOff, Info, ArrowRight, Pencil, Check, X, Palette, Clock, Droplets } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { themes } from "@/data/scriptures";
 import { toast } from "sonner";
 
 const virtueThemes = ["Leadership", "Courage", "Faith", "Patience", "Discipline", "Purpose", "Wisdom", "Perseverance", "Hope", "Love", "Humility", "Gratitude", "Trust", "Strength", "Peace", "Integrity"];
 const realTalkThemes = ["Fear", "Money", "Negotiation", "Anxiety", "Failure", "Anger", "Jealousy", "Loneliness", "Doubt", "Greed", "Pride", "Suffering"];
+
+type ColorMode = "crimson" | "ocean" | "ember" | "forest" | "royal" | "midnight";
+
+const colorModes: { id: ColorMode; label: string; preview: string; hue: string }[] = [
+  { id: "crimson", label: "Crimson", preview: "bg-[hsl(0,80%,50%)]", hue: "0" },
+  { id: "ocean", label: "Ocean", preview: "bg-[hsl(210,80%,50%)]", hue: "210" },
+  { id: "ember", label: "Ember", preview: "bg-[hsl(30,80%,50%)]", hue: "30" },
+  { id: "forest", label: "Forest", preview: "bg-[hsl(150,60%,40%)]", hue: "150" },
+  { id: "royal", label: "Royal", preview: "bg-[hsl(270,70%,55%)]", hue: "270" },
+  { id: "midnight", label: "Midnight", preview: "bg-[hsl(220,20%,25%)]", hue: "220" },
+];
+
+function applyColorMode(mode: ColorMode, isDark: boolean) {
+  const root = document.documentElement;
+  const config = colorModes.find(c => c.id === mode)!;
+  const h = config.hue;
+
+  if (mode === "midnight") {
+    root.style.setProperty("--primary", `${h} 20% ${isDark ? "55" : "25"}%`);
+    root.style.setProperty("--accent", `${h} 20% ${isDark ? "55" : "25"}%`);
+    root.style.setProperty("--ring", `${h} 20% ${isDark ? "55" : "25"}%`);
+  } else {
+    root.style.setProperty("--primary", `${h} 80% ${isDark ? "55" : "50"}%`);
+    root.style.setProperty("--accent", `${h} 80% ${isDark ? "55" : "50"}%`);
+    root.style.setProperty("--ring", `${h} 80% ${isDark ? "55" : "50"}%`);
+  }
+
+  localStorage.setItem("fb-color-mode", mode);
+}
 
 export default function ProfilePage() {
   const { favorites } = useFavorites();
@@ -26,6 +55,16 @@ export default function ProfilePage() {
     const saved = localStorage.getItem("fb-selected-themes");
     return saved ? JSON.parse(saved) : [...themes];
   });
+
+  // Notification time
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [notifTime, setNotifTime] = useState(() => localStorage.getItem("fb-notif-time") || "08:00");
+
+  // Color mode
+  const [showColors, setShowColors] = useState(false);
+  const [colorMode, setColorMode] = useState<ColorMode>(() =>
+    (localStorage.getItem("fb-color-mode") as ColorMode) || "crimson"
+  );
 
   const saveName = () => {
     const trimmed = nameInput.trim().toUpperCase();
@@ -50,6 +89,7 @@ export default function ProfilePage() {
     setDarkMode(next);
     document.documentElement.classList.toggle("dark", next);
     localStorage.setItem("fb-dark-mode", next ? "true" : "false");
+    applyColorMode(colorMode, next);
     toast.success(next ? "Dark mode enabled" : "Light mode enabled");
   };
 
@@ -60,6 +100,7 @@ export default function ProfilePage() {
         if (perm === "granted") {
           setNotificationsEnabled(true);
           localStorage.setItem("fb-notifications", "true");
+          setShowTimePicker(true);
           toast.success("Notifications enabled");
         } else {
           toast.error("Permission denied");
@@ -70,8 +111,21 @@ export default function ProfilePage() {
     } else {
       setNotificationsEnabled(false);
       localStorage.setItem("fb-notifications", "false");
+      setShowTimePicker(false);
       toast.success("Notifications disabled");
     }
+  };
+
+  const handleTimeChange = (time: string) => {
+    setNotifTime(time);
+    localStorage.setItem("fb-notif-time", time);
+    toast.success(`Notification time set to ${time}`);
+  };
+
+  const handleColorChange = (mode: ColorMode) => {
+    setColorMode(mode);
+    applyColorMode(mode, darkMode);
+    toast.success(`${colorModes.find(c => c.id === mode)!.label} theme applied`);
   };
 
   const streak = (() => {
@@ -101,14 +155,19 @@ export default function ProfilePage() {
       action: () => { setNameInput(name); setEditingName(true); },
     },
     {
+      icon: Droplets,
+      label: `Color: ${colorModes.find(c => c.id === colorMode)!.label}`,
+      action: () => setShowColors(prev => !prev),
+    },
+    {
       icon: Palette,
       label: "Manage Themes",
       action: () => setShowThemes(prev => !prev),
     },
     {
       icon: notificationsEnabled ? Bell : BellOff,
-      label: notificationsEnabled ? "Notifications On" : "Notifications Off",
-      action: toggleNotifications,
+      label: notificationsEnabled ? `Notifications · ${notifTime}` : "Notifications Off",
+      action: notificationsEnabled ? () => setShowTimePicker(prev => !prev) : toggleNotifications,
     },
     {
       icon: darkMode ? Moon : Sun,
@@ -212,6 +271,79 @@ export default function ProfilePage() {
           </button>
         ))}
       </div>
+
+      {/* Color mode picker */}
+      <AnimatePresence>
+        {showColors && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden mt-4"
+          >
+            <div className="bg-card border-2 border-foreground/10 p-4">
+              <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-primary mb-3">Color Mode</p>
+              <div className="grid grid-cols-3 gap-2">
+                {colorModes.map(mode => (
+                  <button
+                    key={mode.id}
+                    onClick={() => handleColorChange(mode.id)}
+                    className={`flex flex-col items-center gap-2 p-3 border-2 transition-all ${
+                      colorMode === mode.id
+                        ? "border-foreground bg-secondary"
+                        : "border-border hover:border-foreground/40"
+                    }`}
+                  >
+                    <div className={`w-8 h-8 ${mode.preview}`} />
+                    <span className="text-[10px] font-body font-bold uppercase tracking-wider text-foreground">{mode.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Notification time picker */}
+      <AnimatePresence>
+        {showTimePicker && notificationsEnabled && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden mt-4"
+          >
+            <div className="bg-card border-2 border-foreground/10 p-4">
+              <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-primary mb-3">Daily Reminder Time</p>
+              <div className="flex items-center gap-3">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <input
+                  type="time"
+                  value={notifTime}
+                  onChange={e => handleTimeChange(e.target.value)}
+                  className="bg-background text-foreground font-body text-sm font-semibold px-3 py-2 border-2 border-border focus:border-primary outline-none transition-colors"
+                />
+                <p className="text-xs font-body text-muted-foreground">Your daily scripture reminder</p>
+              </div>
+              <div className="flex gap-2 mt-3 flex-wrap">
+                {["06:00", "07:00", "08:00", "09:00", "12:00", "21:00"].map(t => (
+                  <button
+                    key={t}
+                    onClick={() => handleTimeChange(t)}
+                    className={`px-3 py-1.5 text-[10px] font-body font-bold uppercase tracking-wider border-2 transition-all ${
+                      notifTime === t
+                        ? "bg-foreground text-background border-foreground"
+                        : "bg-transparent text-muted-foreground border-border hover:border-foreground"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Theme selector panel */}
       <AnimatePresence>

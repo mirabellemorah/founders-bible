@@ -65,7 +65,7 @@ export default function HomePage() {
         <div className="flex items-end justify-between">
           <div>
             <p className="text-[10px] font-body font-bold uppercase tracking-[0.3em] text-muted-foreground">
-              {greeting()} · Today's Word
+              Good {greeting()}, {founderName}
             </p>
             <h1 className="font-display text-5xl font-black mt-1 text-foreground leading-[0.9] tracking-tight">
               THE
