@@ -69,38 +69,42 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-screen max-h-screen">
+      {/* Header */}
       <div className="px-5 pt-safe">
-        <div className="flex items-center justify-between pt-3 pb-1">
-          <p className="font-display text-[11px] font-bold uppercase tracking-[0.25em] text-foreground">
+        <div className="flex items-center justify-between pt-3 pb-2 border-b-2 border-foreground">
+          <p className="font-display text-xs font-black uppercase tracking-[0.3em] text-foreground">
             Founder's Bible
           </p>
-          <div className="w-2 h-2 rounded-full bg-primary" />
+          <p className="font-body text-[9px] font-medium uppercase tracking-widest text-muted-foreground">
+            AI Chat
+          </p>
         </div>
-        <div className="pt-2 pb-3">
-          <h1 className="font-display text-2xl font-bold text-foreground">
-            AI <span className="italic text-primary">Reflection</span>
+        <div className="pt-4 pb-3">
+          <h1 className="font-display text-3xl font-black text-foreground leading-[0.9] tracking-tight">
+            ASK <span className="italic text-primary">&</span> REFLECT
           </h1>
-          <p className="text-xs font-body text-muted-foreground mt-1">
-            Share how you're feeling. Receive scripture & encouragement.
+          <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-muted-foreground mt-2">
+            Share your struggle · Receive scripture & wisdom
           </p>
         </div>
       </div>
 
+      {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 pb-4">
         {messages.length === 0 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="w-4 h-4 text-primary" />
-              <p className="text-xs font-body font-semibold text-muted-foreground uppercase tracking-widest">
+              <p className="text-[10px] font-body font-bold text-muted-foreground uppercase tracking-[0.2em]">
                 Try saying
               </p>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {prompts.map((p) => (
                 <button
                   key={p}
                   onClick={() => send(p)}
-                  className="w-full text-left px-4 py-3 rounded-xl bg-card border border-border text-sm font-body text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+                  className="w-full text-left px-4 py-3.5 border-b border-border text-sm font-body text-foreground hover:bg-foreground hover:text-background transition-all"
                 >
                   "{p}"
                 </button>
@@ -118,17 +122,17 @@ export default function ChatPage() {
               className={`mt-3 ${msg.role === "user" ? "flex justify-end" : ""}`}
             >
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm font-body leading-relaxed ${
+                className={`max-w-[85%] px-4 py-3 text-sm font-body leading-relaxed ${
                   msg.role === "user"
-                    ? "bg-foreground text-background rounded-br-md"
-                    : "bg-card border border-border text-foreground rounded-bl-md"
+                    ? "bg-foreground text-background"
+                    : "bg-card border-l-4 border-primary text-foreground"
                 }`}
               >
                 {msg.role === "assistant" ? (
                   <div className="whitespace-pre-wrap">
                     {msg.content.split(/(\*\*.*?\*\*|_".*?"_)/g).map((part, i) => {
                       if (part.startsWith("**") && part.endsWith("**")) {
-                        return <strong key={i} className="text-primary">{part.slice(2, -2)}</strong>;
+                        return <strong key={i} className="text-primary font-bold">{part.slice(2, -2)}</strong>;
                       }
                       if (part.startsWith('_"') && part.endsWith('"_')) {
                         return <em key={i} className="block my-2 font-display text-base leading-relaxed">{part.slice(1, -1)}</em>;
@@ -146,11 +150,11 @@ export default function ChatPage() {
 
         {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3">
-            <div className="inline-flex gap-1.5 bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3">
+            <div className="inline-flex gap-1.5 bg-card border-l-4 border-primary px-4 py-3">
               {[0, 1, 2].map((i) => (
                 <motion.div
                   key={i}
-                  className="w-1.5 h-1.5 rounded-full bg-primary"
+                  className="w-1.5 h-1.5 bg-primary"
                   animate={{ opacity: [0.3, 1, 0.3] }}
                   transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
                 />
@@ -160,22 +164,23 @@ export default function ChatPage() {
         )}
       </div>
 
-      <div className="px-5 pb-24 pt-2 bg-background">
-        <div className="flex items-center gap-2 bg-card border border-border rounded-2xl px-4 py-2">
+      {/* Input */}
+      <div className="px-5 pb-24 pt-2 bg-background border-t-2 border-foreground">
+        <div className="flex items-center gap-2">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send(input)}
             placeholder="How are you feeling today?"
-            className="flex-1 bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground outline-none"
+            className="flex-1 bg-card border-2 border-foreground/10 px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
             disabled={isLoading}
           />
           <button
             onClick={() => send(input)}
             disabled={!input.trim() || isLoading}
-            className="w-9 h-9 rounded-xl bg-foreground flex items-center justify-center disabled:opacity-40 transition-opacity"
+            className="w-12 h-12 bg-foreground flex items-center justify-center disabled:opacity-40 transition-opacity hover:bg-primary"
           >
-            <Send className="w-4 h-4 text-background" strokeWidth={1.5} />
+            <Send className="w-4 h-4 text-background" strokeWidth={2} />
           </button>
         </div>
       </div>
