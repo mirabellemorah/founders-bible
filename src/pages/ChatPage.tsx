@@ -13,9 +13,9 @@ interface Message {
 const prompts = [
   "I feel overwhelmed building my startup.",
   "I need strength to keep going today.",
-  "I feel discouraged after a setback.",
-  "Help me find purpose in what I'm building.",
-  "I need wisdom to make a tough decision.",
+  "How do I handle fear of failure?",
+  "Help me negotiate with wisdom.",
+  "I need wisdom about money & stewardship.",
   "I feel alone in my entrepreneurial journey.",
 ];
 
@@ -70,8 +70,16 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-screen max-h-screen">
       <div className="px-5 pt-safe">
-        <div className="pt-6 pb-3">
-          <h1 className="font-display text-2xl font-semibold text-foreground">AI Reflection</h1>
+        <div className="flex items-center justify-between pt-3 pb-1">
+          <p className="font-display text-[11px] font-bold uppercase tracking-[0.25em] text-foreground">
+            Founder's Bible
+          </p>
+          <div className="w-2 h-2 rounded-full bg-primary" />
+        </div>
+        <div className="pt-2 pb-3">
+          <h1 className="font-display text-2xl font-bold text-foreground">
+            AI <span className="italic text-primary">Reflection</span>
+          </h1>
           <p className="text-xs font-body text-muted-foreground mt-1">
             Share how you're feeling. Receive scripture & encouragement.
           </p>
@@ -80,10 +88,10 @@ export default function ChatPage() {
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 pb-4">
         {messages.length === 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6">
             <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-4 h-4 text-gold" />
-              <p className="text-xs font-body font-medium text-muted-foreground uppercase tracking-widest">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <p className="text-xs font-body font-semibold text-muted-foreground uppercase tracking-widest">
                 Try saying
               </p>
             </div>
@@ -92,7 +100,7 @@ export default function ChatPage() {
                 <button
                   key={p}
                   onClick={() => send(p)}
-                  className="w-full text-left px-4 py-3 rounded-xl bg-card border border-border text-sm font-body text-foreground hover:bg-scripture transition-colors"
+                  className="w-full text-left px-4 py-3 rounded-xl bg-card border border-border text-sm font-body text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
                 >
                   "{p}"
                 </button>
@@ -112,7 +120,7 @@ export default function ChatPage() {
               <div
                 className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm font-body leading-relaxed ${
                   msg.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-br-md"
+                    ? "bg-foreground text-background rounded-br-md"
                     : "bg-card border border-border text-foreground rounded-bl-md"
                 }`}
               >
@@ -120,7 +128,7 @@ export default function ChatPage() {
                   <div className="whitespace-pre-wrap">
                     {msg.content.split(/(\*\*.*?\*\*|_".*?"_)/g).map((part, i) => {
                       if (part.startsWith("**") && part.endsWith("**")) {
-                        return <strong key={i} className="text-gold-dark">{part.slice(2, -2)}</strong>;
+                        return <strong key={i} className="text-primary">{part.slice(2, -2)}</strong>;
                       }
                       if (part.startsWith('_"') && part.endsWith('"_')) {
                         return <em key={i} className="block my-2 font-display text-base leading-relaxed">{part.slice(1, -1)}</em>;
@@ -142,7 +150,7 @@ export default function ChatPage() {
               {[0, 1, 2].map((i) => (
                 <motion.div
                   key={i}
-                  className="w-1.5 h-1.5 rounded-full bg-gold"
+                  className="w-1.5 h-1.5 rounded-full bg-primary"
                   animate={{ opacity: [0.3, 1, 0.3] }}
                   transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
                 />
@@ -165,9 +173,9 @@ export default function ChatPage() {
           <button
             onClick={() => send(input)}
             disabled={!input.trim() || isLoading}
-            className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center disabled:opacity-40 transition-opacity"
+            className="w-9 h-9 rounded-xl bg-foreground flex items-center justify-center disabled:opacity-40 transition-opacity"
           >
-            <Send className="w-4 h-4 text-primary-foreground" strokeWidth={1.5} />
+            <Send className="w-4 h-4 text-background" strokeWidth={1.5} />
           </button>
         </div>
       </div>

@@ -21,13 +21,22 @@ export function BottomNav() {
             className={({ isActive }) =>
               `flex flex-col items-center gap-0.5 px-3 py-1.5 transition-colors ${
                 isActive
-                  ? "text-gold-dark"
-                  : "text-warm-gray"
+                  ? "text-foreground"
+                  : "text-muted-foreground"
               }`
             }
           >
-            <Icon className="w-5 h-5" strokeWidth={1.5} />
-            <span className="text-[10px] font-body font-medium tracking-wide">{label}</span>
+            {({ isActive }) => (
+              <>
+                <div className="relative">
+                  <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  {isActive && (
+                    <div className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-primary" />
+                  )}
+                </div>
+                <span className="text-[10px] font-body font-medium tracking-wide">{label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </div>
