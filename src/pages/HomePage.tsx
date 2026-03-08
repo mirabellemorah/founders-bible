@@ -1,16 +1,20 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bookmark, Share2, BookOpen, Loader2, ArrowRight, Image, X } from "lucide-react";
+import { Bookmark, Share2, BookOpen, Loader2, ArrowRight, Image, X, ChevronDown } from "lucide-react";
 import { fetchDailyScripture, type Scripture } from "@/data/scriptures";
 import { useFavorites } from "@/hooks/useFavorites";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { fetchBiblePassage, buildExpandedReference, type BibleVerse } from "@/lib/bibleApi";
 
 export default function HomePage() {
   const [scripture, setScripture] = useState<Scripture | null>(null);
   const [loading, setLoading] = useState(true);
   const { toggle, isFavorite } = useFavorites();
   const [showShareOptions, setShowShareOptions] = useState(false);
+  const [expandedVerses, setExpandedVerses] = useState<BibleVerse[]>([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [expandLevel, setExpandLevel] = useState(0);
 
   useEffect(() => {
     fetchDailyScripture().then((s) => {
