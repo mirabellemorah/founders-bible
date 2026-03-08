@@ -31,6 +31,8 @@ export default function HomePage() {
     }
   };
 
+  const founderName = localStorage.getItem("fb-founder-name") || "Founder";
+
   const greeting = () => {
     const h = new Date().getHours();
     if (h < 12) return "Morning";
