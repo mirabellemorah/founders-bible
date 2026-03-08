@@ -13,7 +13,7 @@ const THEME_STYLES = [
   { id: "teal", label: "Deep Teal", primary: "185 55% 30%", gold: "185 55% 30%", accent: "185 45% 40%" },
   { id: "crimson", label: "Crimson", primary: "0 65% 45%", gold: "0 65% 45%", accent: "0 55% 55%" },
   { id: "plum", label: "Royal Plum", primary: "280 40% 40%", gold: "280 40% 40%", accent: "280 35% 50%" },
-  { id: "midnight", label: "Midnight", primary: "0 0% 8%", gold: "0 0% 8%", accent: "0 0% 20%" },
+  { id: "midnight", label: "Midnight", primary: "0 0% 85%", gold: "0 0% 85%", accent: "0 0% 70%" },
 ] as const;
 
 export default function ProfilePage() {
