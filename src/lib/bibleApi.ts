@@ -35,7 +35,6 @@ export async function fetchBiblePassage(reference: string): Promise<BiblePassage
 
 /**
  * Fetch an entire chapter
- * Example: "Psalm 23" returns all verses in that chapter
  */
 export async function fetchBibleChapter(book: string, chapter: number): Promise<BiblePassage | null> {
   return fetchBiblePassage(`${book} ${chapter}`);
@@ -43,7 +42,6 @@ export async function fetchBibleChapter(book: string, chapter: number): Promise<
 
 /**
  * Build a reference range for loading more context around a verse
- * e.g., given "Proverbs", chapter 3, verseStart 5, verseEnd 6, expand by `extra` verses in each direction
  */
 export function buildExpandedReference(
   book: string,
@@ -56,3 +54,27 @@ export function buildExpandedReference(
   const end = (verseEnd || verseStart) + extra;
   return `${book} ${chapter}:${start}-${end}`;
 }
+
+/**
+ * Parse a reference string to extract book, chapter, verse info
+ */
+export function parseReference(ref: string): { book: string; chapter: number } | null {
+  // Match patterns like "Genesis 1", "1 John 3", "Psalm 23:1-6"
+  const match = ref.match(/^(.+?)\s+(\d+)/);
+  if (!match) return null;
+  return { book: match[1], chapter: parseInt(match[2]) };
+}
+
+// Orthodox/Deuterocanonical books supported by bible-api.com (WEB translation)
+export const orthodoxBooks = [
+  "Tobit", "Judith", "Wisdom of Solomon", "Sirach",
+  "Baruch", "1 Maccabees", "2 Maccabees",
+];
+
+// All popular books including deuterocanonical
+export const allPopularBooks = [
+  "Genesis", "Exodus", "Psalms", "Proverbs", "Isaiah",
+  "Matthew", "Mark", "Luke", "John", "Acts",
+  "Romans", "1 Corinthians", "Philippians", "James", "Revelation",
+  "Tobit", "Wisdom of Solomon", "Sirach",
+];
