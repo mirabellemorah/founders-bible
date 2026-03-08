@@ -57,10 +57,11 @@ export default function HomePage() {
     ctx.fillRect(80, 80, 6, 120);
 
     // Theme badge
-    ctx.fillStyle = accentColor;
-    ctx.fillRect(110, 80, ctx.measureText(scripture.theme.toUpperCase()).width + 40, 36);
-    ctx.fillStyle = "#fff";
     ctx.font = "bold 16px sans-serif";
+    const badgeWidth = ctx.measureText(scripture.theme.toUpperCase()).width + 40;
+    ctx.fillStyle = badgeColor;
+    ctx.fillRect(110, 80, badgeWidth, 36);
+    ctx.fillStyle = badgeTextColor;
     ctx.fillText(scripture.theme.toUpperCase(), 130, 104);
 
     // Quote
