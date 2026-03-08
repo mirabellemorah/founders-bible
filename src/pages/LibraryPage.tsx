@@ -49,11 +49,19 @@ export default function LibraryPage() {
     }
   }, [selectedTheme]);
 
+  // Read user's theme preferences from localStorage
+  const userThemes = (() => {
+    const saved = localStorage.getItem("fb-selected-themes");
+    return saved ? JSON.parse(saved) as string[] : [...themes];
+  })();
+
+  const activeThemes = themes.filter(t => userThemes.includes(t));
+
   const displayThemes = activeCategory === "all"
-    ? themes
+    ? activeThemes
     : activeCategory === "positive"
-      ? themes.filter(t => positiveThemes.includes(t))
-      : themes.filter(t => realThemes.includes(t));
+      ? activeThemes.filter(t => positiveThemes.includes(t))
+      : activeThemes.filter(t => realThemes.includes(t));
 
   const visibleScriptures = filteredScriptures.slice(0, visibleCount);
   const hasMore = visibleCount < filteredScriptures.length;
