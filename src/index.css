@@ -6,58 +6,58 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 0 0% 5%;
+    --background: 40 20% 97%;
+    --foreground: 30 10% 8%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 5%;
+    --card: 40 25% 99%;
+    --card-foreground: 30 10% 8%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 5%;
+    --popover: 40 25% 99%;
+    --popover-foreground: 30 10% 8%;
 
-    --primary: 0 80% 50%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 38 80% 50%;
+    --primary-foreground: 30 10% 8%;
 
-    --secondary: 0 0% 94%;
-    --secondary-foreground: 0 0% 5%;
+    --secondary: 35 15% 92%;
+    --secondary-foreground: 30 10% 8%;
 
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 35 15% 92%;
+    --muted-foreground: 30 5% 42%;
 
-    --accent: 0 80% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 38 80% 50%;
+    --accent-foreground: 30 10% 8%;
 
-    --destructive: 0 80% 50%;
+    --destructive: 0 65% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 0 0% 5%;
+    --border: 35 12% 86%;
+    --input: 35 12% 86%;
+    --ring: 30 10% 8%;
 
     --radius: 0rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 5%;
-    --sidebar-primary: 0 80% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 94%;
-    --sidebar-accent-foreground: 0 0% 5%;
-    --sidebar-border: 0 0% 88%;
-    --sidebar-ring: 0 0% 5%;
+    --sidebar-background: 40 20% 97%;
+    --sidebar-foreground: 30 10% 8%;
+    --sidebar-primary: 38 80% 50%;
+    --sidebar-primary-foreground: 30 10% 8%;
+    --sidebar-accent: 35 15% 92%;
+    --sidebar-accent-foreground: 30 10% 8%;
+    --sidebar-border: 35 12% 86%;
+    --sidebar-ring: 30 10% 8%;
 
     /* Custom tokens */
-    --gold: 0 80% 50%;
-    --gold-light: 0 60% 90%;
-    --gold-dark: 0 80% 38%;
-    --sage: 0 0% 45%;
-    --sage-light: 0 0% 94%;
-    --ink: 0 0% 5%;
-    --cream: 0 0% 98%;
-    --cream-dark: 0 0% 94%;
-    --scripture-bg: 0 0% 95%;
-    --warm-gray: 0 0% 40%;
-    --highlight: 0 80% 50%;
-    --highlight-light: 0 60% 92%;
+    --gold: 38 80% 50%;
+    --gold-light: 40 60% 88%;
+    --gold-dark: 32 75% 38%;
+    --sage: 30 5% 42%;
+    --sage-light: 35 15% 92%;
+    --ink: 30 10% 8%;
+    --cream: 40 20% 97%;
+    --cream-dark: 35 15% 92%;
+    --scripture-bg: 38 15% 94%;
+    --warm-gray: 30 5% 42%;
+    --highlight: 38 80% 50%;
+    --highlight-light: 40 50% 90%;
 
     --font-display: 'Playfair Display', Georgia, serif;
     --font-body: 'Space Grotesk', system-ui, sans-serif;
