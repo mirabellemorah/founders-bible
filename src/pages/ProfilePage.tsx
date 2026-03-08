@@ -94,15 +94,31 @@ export default function ProfilePage() {
     toast.success(next ? "Dark mode enabled" : "Light mode enabled");
   };
 
-  const toggleNotifications = () => {
-    const next = !notificationsEnabled;
-    setNotificationsEnabled(next);
-    localStorage.setItem("fb-notifications", next ? "true" : "false");
-    if (next) {
+  // Start notification scheduler on mount if enabled
+  useEffect(() => {
+    if (notificationsEnabled) {
+      startNotificationScheduler();
+    }
+    return () => stopNotificationScheduler();
+  }, [notificationsEnabled]);
+
+  const toggleNotifications = async () => {
+    if (!notificationsEnabled) {
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        toast.error("Please allow notifications in your browser settings");
+        return;
+      }
+      setNotificationsEnabled(true);
+      localStorage.setItem("fb-notifications", "true");
       setShowTimePicker(true);
+      startNotificationScheduler();
       toast.success("Notifications enabled");
     } else {
+      setNotificationsEnabled(false);
+      localStorage.setItem("fb-notifications", "false");
       setShowTimePicker(false);
+      stopNotificationScheduler();
       toast.success("Notifications disabled");
     }
   };
