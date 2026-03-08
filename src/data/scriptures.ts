@@ -12,6 +12,14 @@ export const themes = [
   "Purpose",
   "Wisdom",
   "Perseverance",
+  "Hope",
+  "Love",
+  "Humility",
+  "Gratitude",
+  "Trust",
+  "Strength",
+  "Peace",
+  "Integrity",
 ] as const;
 
 export type Theme = (typeof themes)[number];
