@@ -169,7 +169,7 @@ export default function HomePage() {
   };
 
   const dayNum = new Date().getDate().toString().padStart(2, "0");
-  const monthShort = new Date().toLocaleString("default", { month: "short" }).toUpperCase();
+  
 
   if (loading) {
     return (
@@ -190,7 +190,7 @@ export default function HomePage() {
   return (
     <div className="px-5">
       {/* Hero section with giant date */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-6 pb-2 relative overflow-hidden">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-6 pb-2 relative">
         <div className="flex items-end justify-between">
           <div>
             <p className="text-[10px] font-body font-bold uppercase tracking-[0.3em] text-muted-foreground">
@@ -202,17 +202,14 @@ export default function HomePage() {
               <span className="italic text-primary">WORD</span>
             </h1>
           </div>
-          {/* Giant decorative day number */}
+       {/* Giant decorative day number */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 0.08, x: 0 }}
-            className="flex flex-col items-end -mr-2 -mb-4 select-none pointer-events-none"
+            className="overflow-hidden sm:overflow-visible -mr-2 -mb-4 select-none pointer-events-none"
           >
-            <p className="font-display text-[100px] sm:text-[140px] font-black leading-none text-foreground">
+            <p className="font-display text-[140px] font-black leading-none text-foreground">
               {dayNum}
-            </p>
-            <p className="font-display text-lg font-bold text-foreground -mt-2 mr-1">
-              {monthShort}
             </p>
           </motion.div>
         </div>
@@ -350,19 +347,11 @@ export default function HomePage() {
                     Text
                   </button>
                   <button
-                    onClick={() => handleShareImage("dark")}
-                    className="flex-1 py-3 bg-[#1a1a1a] text-[#f9f8f0] border border-background/20 font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary transition-all"
-                  >
-                    <span className="flex items-center justify-center gap-1.5">
-                      <Image className="w-3.5 h-3.5" /> Dark
-                    </span>
-                  </button>
-                  <button
                     onClick={() => handleShareImage("cream")}
                     className="flex-1 py-3 bg-[#f9f8f0] text-[#1a1a1a] border border-background/20 font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary transition-all"
                   >
                     <span className="flex items-center justify-center gap-1.5">
-                      <Image className="w-3.5 h-3.5" /> Cream
+                      <Image className="w-3.5 h-3.5" /> Image
                     </span>
                   </button>
                 </div>

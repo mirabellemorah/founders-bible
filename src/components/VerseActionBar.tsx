@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Bookmark, Share2, X, Image } from "lucide-react";
 import { toast } from "sonner";
 import { useFavorites } from "@/hooks/useFavorites";
+import { getSavedHighlights, toggleHighlight, type SavedHighlight } from "@/lib/highlights";
 
 interface VerseActionBarProps {
   verseText: string;
@@ -12,15 +14,26 @@ interface VerseActionBarProps {
 
 export default function VerseActionBar({ verseText, reference, scriptureId, onClose }: VerseActionBarProps) {
   const { toggle, isFavorite } = useFavorites();
-  const saved = scriptureId ? isFavorite(scriptureId) : false;
+  const [highlightSaved, setHighlightSaved] = useState(false);
+
+  useEffect(() => {
+    if (!scriptureId) {
+      const highlights = getSavedHighlights();
+      setHighlightSaved(highlights.some(h => h.reference === reference && h.text === verseText));
+    }
+  }, [scriptureId, reference, verseText]);
+
+  const saved = scriptureId ? isFavorite(scriptureId) : highlightSaved;
 
   const handleSave = () => {
-    if (!scriptureId) {
-      toast.info("This verse can only be shared");
-      return;
+    if (scriptureId) {
+      toggle(scriptureId);
+      toast.success(saved ? "Removed from saved" : "Saved to favorites");
+    } else {
+      toggleHighlight({ text: verseText, reference });
+      setHighlightSaved(!highlightSaved);
+      toast.success(highlightSaved ? "Removed from saved" : "Saved to highlights");
     }
-    toggle(scriptureId);
-    toast.success(saved ? "Removed from saved" : "Saved to favorites");
   };
 
   const handleShareText = async () => {
@@ -120,18 +133,16 @@ export default function VerseActionBar({ verseText, reference, scriptureId, onCl
         "{verseText}"
       </p>
       <div className="flex gap-2">
-        {scriptureId && (
-          <button
-            onClick={handleSave}
-            className={`flex-1 py-2.5 font-body text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
-              saved
-                ? "bg-primary text-primary-foreground"
-                : "border border-background/20 text-background hover:border-primary hover:text-primary"
-            }`}
-          >
-            <Bookmark className="w-3.5 h-3.5" fill={saved ? "currentColor" : "none"} /> {saved ? "Saved" : "Save"}
-          </button>
-        )}
+        <button
+          onClick={handleSave}
+          className={`flex-1 py-2.5 font-body text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
+            saved
+              ? "bg-primary text-primary-foreground"
+              : "border border-background/20 text-background hover:border-primary hover:text-primary"
+          }`}
+        >
+          <Bookmark className="w-3.5 h-3.5" fill={saved ? "currentColor" : "none"} /> {saved ? "Saved" : "Save"}
+        </button>
         <button
           onClick={handleShareText}
           className="flex-1 py-2.5 border border-background/20 text-background font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-1.5"
@@ -139,16 +150,10 @@ export default function VerseActionBar({ verseText, reference, scriptureId, onCl
           <Share2 className="w-3.5 h-3.5" /> Text
         </button>
         <button
-          onClick={() => handleShareImage("dark")}
-          className="flex-1 py-2.5 bg-[hsl(var(--card))] text-foreground border border-background/20 font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary transition-all flex items-center justify-center gap-1.5"
-        >
-          <Image className="w-3.5 h-3.5" /> Dark
-        </button>
-        <button
           onClick={() => handleShareImage("cream")}
           className="flex-1 py-2.5 bg-background text-foreground border border-background/20 font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary transition-all flex items-center justify-center gap-1.5"
         >
-          <Image className="w-3.5 h-3.5" /> Cream
+          <Image className="w-3.5 h-3.5" /> Image
         </button>
       </div>
     </motion.div>
