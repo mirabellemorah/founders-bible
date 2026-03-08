@@ -11,7 +11,6 @@ export default function SavedPage() {
   const [savedScriptures, setSavedScriptures] = useState<Scripture[]>([]);
   const [highlights, setHighlights] = useState<SavedHighlight[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"scriptures" | "highlights">("scriptures");
 
   useEffect(() => {
     if (!favsLoading) {
