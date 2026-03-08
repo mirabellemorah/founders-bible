@@ -347,19 +347,11 @@ export default function HomePage() {
                     Text
                   </button>
                   <button
-                    onClick={() => handleShareImage("dark")}
-                    className="flex-1 py-3 bg-[#1a1a1a] text-[#f9f8f0] border border-background/20 font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary transition-all"
-                  >
-                    <span className="flex items-center justify-center gap-1.5">
-                      <Image className="w-3.5 h-3.5" /> Dark
-                    </span>
-                  </button>
-                  <button
                     onClick={() => handleShareImage("cream")}
                     className="flex-1 py-3 bg-[#f9f8f0] text-[#1a1a1a] border border-background/20 font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary transition-all"
                   >
                     <span className="flex items-center justify-center gap-1.5">
-                      <Image className="w-3.5 h-3.5" /> Cream
+                      <Image className="w-3.5 h-3.5" /> Image
                     </span>
                   </button>
                 </div>

@@ -120,18 +120,16 @@ export default function VerseActionBar({ verseText, reference, scriptureId, onCl
         "{verseText}"
       </p>
       <div className="flex gap-2">
-        {scriptureId && (
-          <button
-            onClick={handleSave}
-            className={`flex-1 py-2.5 font-body text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
-              saved
-                ? "bg-primary text-primary-foreground"
-                : "border border-background/20 text-background hover:border-primary hover:text-primary"
-            }`}
-          >
-            <Bookmark className="w-3.5 h-3.5" fill={saved ? "currentColor" : "none"} /> {saved ? "Saved" : "Save"}
-          </button>
-        )}
+        <button
+          onClick={handleSave}
+          className={`flex-1 py-2.5 font-body text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
+            saved
+              ? "bg-primary text-primary-foreground"
+              : "border border-background/20 text-background hover:border-primary hover:text-primary"
+          }`}
+        >
+          <Bookmark className="w-3.5 h-3.5" fill={saved ? "currentColor" : "none"} /> {saved ? "Saved" : "Save"}
+        </button>
         <button
           onClick={handleShareText}
           className="flex-1 py-2.5 border border-background/20 text-background font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-1.5"
@@ -139,16 +137,10 @@ export default function VerseActionBar({ verseText, reference, scriptureId, onCl
           <Share2 className="w-3.5 h-3.5" /> Text
         </button>
         <button
-          onClick={() => handleShareImage("dark")}
-          className="flex-1 py-2.5 bg-[hsl(var(--card))] text-foreground border border-background/20 font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary transition-all flex items-center justify-center gap-1.5"
-        >
-          <Image className="w-3.5 h-3.5" /> Dark
-        </button>
-        <button
           onClick={() => handleShareImage("cream")}
           className="flex-1 py-2.5 bg-background text-foreground border border-background/20 font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary transition-all flex items-center justify-center gap-1.5"
         >
-          <Image className="w-3.5 h-3.5" /> Cream
+          <Image className="w-3.5 h-3.5" /> Image
         </button>
       </div>
     </motion.div>
