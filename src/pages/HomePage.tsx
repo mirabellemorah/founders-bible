@@ -68,7 +68,7 @@ export default function HomePage() {
               Good {greeting()}, {founderName}
             </p>
             <h1 className="font-display text-5xl font-black mt-1 text-foreground leading-[0.9] tracking-tight">
-              THE
+              TODAY'S
               <br />
               <span className="italic text-primary">WORD</span>
             </h1>
