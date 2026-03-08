@@ -1,9 +1,12 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { User, BookOpen, Flame, Heart, Moon, Sun, Bell, BellOff, Info, ArrowRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { User, BookOpen, Flame, Heart, Moon, Sun, Bell, BellOff, Info, ArrowRight, Pencil, Check, X, Palette } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { themes } from "@/data/scriptures";
 import { toast } from "sonner";
+
+const virtueThemes = ["Leadership", "Courage", "Faith", "Patience", "Discipline", "Purpose", "Wisdom", "Perseverance", "Hope", "Love", "Humility", "Gratitude", "Trust", "Strength", "Peace", "Integrity"];
+const realTalkThemes = ["Fear", "Money", "Negotiation", "Anxiety", "Failure", "Anger", "Jealousy", "Loneliness", "Doubt", "Greed", "Pride", "Suffering"];
 
 export default function ProfilePage() {
   const { favorites } = useFavorites();
@@ -11,6 +14,36 @@ export default function ProfilePage() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(
     () => localStorage.getItem("fb-notifications") === "true"
   );
+
+  // Editable name
+  const [name, setName] = useState(() => localStorage.getItem("fb-founder-name") || "FOUNDER");
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(name);
+
+  // Theme preferences
+  const [showThemes, setShowThemes] = useState(false);
+  const [selectedThemes, setSelectedThemes] = useState<string[]>(() => {
+    const saved = localStorage.getItem("fb-selected-themes");
+    return saved ? JSON.parse(saved) : [...themes];
+  });
+
+  const saveName = () => {
+    const trimmed = nameInput.trim().toUpperCase();
+    if (trimmed) {
+      setName(trimmed);
+      localStorage.setItem("fb-founder-name", trimmed);
+      toast.success("Name updated");
+    }
+    setEditingName(false);
+  };
+
+  const toggleTheme = (theme: string) => {
+    setSelectedThemes(prev => {
+      const next = prev.includes(theme) ? prev.filter(t => t !== theme) : [...prev, theme];
+      localStorage.setItem("fb-selected-themes", JSON.stringify(next));
+      return next;
+    });
+  };
 
   const toggleDarkMode = () => {
     const next = !darkMode;
@@ -58,10 +91,20 @@ export default function ProfilePage() {
   const stats = [
     { icon: Flame, label: "Streak", value: streak.toString(), suffix: "days" },
     { icon: Heart, label: "Saved", value: favorites.length.toString(), suffix: "verses" },
-    { icon: BookOpen, label: "Themes", value: themes.length.toString(), suffix: "topics" },
+    { icon: BookOpen, label: "Themes", value: selectedThemes.length.toString(), suffix: "active" },
   ];
 
   const settings = [
+    {
+      icon: Pencil,
+      label: "Edit Name",
+      action: () => { setNameInput(name); setEditingName(true); },
+    },
+    {
+      icon: Palette,
+      label: "Manage Themes",
+      action: () => setShowThemes(prev => !prev),
+    },
     {
       icon: notificationsEnabled ? Bell : BellOff,
       label: notificationsEnabled ? "Notifications On" : "Notifications Off",
@@ -97,7 +140,7 @@ export default function ProfilePage() {
         </h1>
       </div>
 
-      {/* Avatar area */}
+      {/* Avatar area with editable name */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -106,13 +149,42 @@ export default function ProfilePage() {
         <div className="w-16 h-16 bg-primary flex items-center justify-center shrink-0">
           <User className="w-7 h-7 text-primary-foreground" strokeWidth={2} />
         </div>
-        <div>
-          <p className="font-display text-lg font-black text-background tracking-tight">FOUNDER</p>
-          <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-background/50">Building with faith</p>
+        <div className="flex-1 min-w-0">
+          <AnimatePresence mode="wait">
+            {editingName ? (
+              <motion.div
+                key="editing"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex items-center gap-2"
+              >
+                <input
+                  autoFocus
+                  value={nameInput}
+                  onChange={e => setNameInput(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && saveName()}
+                  maxLength={24}
+                  className="bg-background text-foreground font-display text-lg font-black tracking-tight px-2 py-1 w-full outline-none border-2 border-primary"
+                />
+                <button onClick={saveName} className="p-1 text-green-400 hover:text-green-300">
+                  <Check className="w-5 h-5" />
+                </button>
+                <button onClick={() => setEditingName(false)} className="p-1 text-red-400 hover:text-red-300">
+                  <X className="w-5 h-5" />
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div key="display" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <p className="font-display text-lg font-black text-background tracking-tight truncate">{name}</p>
+                <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-background/50">Building with faith</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
 
-      {/* Stats — big bold numbers */}
+      {/* Stats */}
       <div className="mt-4 grid grid-cols-3 gap-1">
         {stats.map(({ icon: Icon, label, value, suffix }) => (
           <div key={label} className="bg-card border-2 border-foreground/10 p-4 text-center">
@@ -140,6 +212,54 @@ export default function ProfilePage() {
           </button>
         ))}
       </div>
+
+      {/* Theme selector panel */}
+      <AnimatePresence>
+        {showThemes && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden mt-4"
+          >
+            <div className="bg-card border-2 border-foreground/10 p-4">
+              <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-primary mb-3">Virtues</p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {virtueThemes.map(theme => (
+                  <button
+                    key={theme}
+                    onClick={() => toggleTheme(theme)}
+                    className={`px-3 py-1.5 text-xs font-body font-bold uppercase tracking-wider border-2 transition-all ${
+                      selectedThemes.includes(theme)
+                        ? "bg-foreground text-background border-foreground"
+                        : "bg-transparent text-muted-foreground border-border hover:border-foreground"
+                    }`}
+                  >
+                    {theme}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-primary mb-3">Real Talk</p>
+              <div className="flex flex-wrap gap-2">
+                {realTalkThemes.map(theme => (
+                  <button
+                    key={theme}
+                    onClick={() => toggleTheme(theme)}
+                    className={`px-3 py-1.5 text-xs font-body font-bold uppercase tracking-wider border-2 transition-all ${
+                      selectedThemes.includes(theme)
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-transparent text-muted-foreground border-border hover:border-primary"
+                    }`}
+                  >
+                    {theme}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[9px] font-body text-muted-foreground mt-3">{selectedThemes.length} themes active</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="h-8" />
     </div>
