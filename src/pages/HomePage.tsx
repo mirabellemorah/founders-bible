@@ -1,16 +1,20 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bookmark, Share2, BookOpen, Loader2, ArrowRight, Image, X } from "lucide-react";
+import { Bookmark, Share2, BookOpen, Loader2, ArrowRight, Image, X, ChevronDown } from "lucide-react";
 import { fetchDailyScripture, type Scripture } from "@/data/scriptures";
 import { useFavorites } from "@/hooks/useFavorites";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { fetchBiblePassage, buildExpandedReference, type BibleVerse } from "@/lib/bibleApi";
 
 export default function HomePage() {
   const [scripture, setScripture] = useState<Scripture | null>(null);
   const [loading, setLoading] = useState(true);
   const { toggle, isFavorite } = useFavorites();
   const [showShareOptions, setShowShareOptions] = useState(false);
+  const [expandedVerses, setExpandedVerses] = useState<BibleVerse[]>([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [expandLevel, setExpandLevel] = useState(0);
 
   useEffect(() => {
     fetchDailyScripture().then((s) => {
@@ -49,16 +53,19 @@ export default function HomePage() {
     const textColor = bg === "dark" ? "#f9f8f0" : "#1a1a1a";
     const mutedColor = bg === "dark" ? "rgba(249,248,240,0.4)" : "rgba(26,26,26,0.4)";
     const accentColor = bg === "dark" ? "#e85d5d" : "#c44040";
+    const badgeColor = bg === "dark" ? "#e85d5d" : "#d4736e";
+    const badgeTextColor = bg === "dark" ? "#fff" : "#f9f8f0";
 
     // Accent bar
     ctx.fillStyle = accentColor;
     ctx.fillRect(80, 80, 6, 120);
 
     // Theme badge
-    ctx.fillStyle = accentColor;
-    ctx.fillRect(110, 80, ctx.measureText(scripture.theme.toUpperCase()).width + 40, 36);
-    ctx.fillStyle = "#fff";
     ctx.font = "bold 16px sans-serif";
+    const badgeWidth = ctx.measureText(scripture.theme.toUpperCase()).width + 40;
+    ctx.fillStyle = badgeColor;
+    ctx.fillRect(110, 80, badgeWidth, 36);
+    ctx.fillStyle = badgeTextColor;
     ctx.fillText(scripture.theme.toUpperCase(), 130, 104);
 
     // Quote
@@ -134,6 +141,22 @@ export default function HomePage() {
       }
       setShowShareOptions(false);
     }, "image/png");
+  };
+
+  const handleLoadMore = async () => {
+    if (!scripture) return;
+    setLoadingMore(true);
+    const nextLevel = expandLevel + 1;
+    const extra = nextLevel * 5;
+    const ref = buildExpandedReference(scripture.book, scripture.chapter, scripture.verse_start, scripture.verse_end, extra);
+    const passage = await fetchBiblePassage(ref);
+    if (passage && passage.verses.length > 0) {
+      setExpandedVerses(passage.verses);
+      setExpandLevel(nextLevel);
+    } else {
+      toast("No more verses available in this range");
+    }
+    setLoadingMore(false);
   };
 
   const founderName = localStorage.getItem("fb-founder-name") || "Founder";
@@ -213,6 +236,44 @@ export default function HomePage() {
         <blockquote className="font-display text-2xl leading-snug text-background italic relative z-10 font-medium">
           "{scripture.text}"
         </blockquote>
+
+        {/* Expanded verses from Bible API */}
+        <AnimatePresence>
+          {expandedVerses.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden mt-4 border-t border-background/10 pt-4"
+            >
+              <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-background/40 mb-3">
+                Full Passage · {expandedVerses.length} verses
+              </p>
+              <div className="space-y-2">
+                {expandedVerses.map((v) => (
+                  <p key={v.verse} className="text-sm font-body leading-relaxed text-background/70">
+                    <span className="text-[10px] font-bold text-primary mr-1.5">{v.verse}</span>
+                    {v.text.trim()}
+                  </p>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Load More button */}
+        <button
+          onClick={handleLoadMore}
+          disabled={loadingMore}
+          className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 border border-background/15 text-background/50 font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all disabled:opacity-50"
+        >
+          {loadingMore ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <ChevronDown className="w-3.5 h-3.5" />
+          )}
+          {expandLevel === 0 ? "Load Full Passage" : "Load More Verses"}
+        </button>
 
         <div className="mt-5 flex items-center gap-3">
           <div className="w-8 h-0.5 bg-primary" />
