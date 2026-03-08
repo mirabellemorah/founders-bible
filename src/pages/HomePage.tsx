@@ -251,13 +251,58 @@ export default function HomePage() {
             {saved ? "Saved" : "Save"}
           </button>
           <button
-            onClick={handleShare}
+            onClick={() => setShowShareOptions(prev => !prev)}
             className="flex-1 flex items-center justify-center gap-2 py-3.5 border border-background/20 text-background font-body text-xs font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
           >
             <Share2 className="w-4 h-4" strokeWidth={2} />
             Share
           </button>
         </div>
+
+        {/* Share options */}
+        <AnimatePresence>
+          {showShareOptions && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-4 border-t border-background/10 pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-background/40">Share as</p>
+                  <button onClick={() => setShowShareOptions(false)} className="text-background/40 hover:text-background">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleShareText}
+                    className="flex-1 py-3 border border-background/20 text-background font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
+                  >
+                    Text
+                  </button>
+                  <button
+                    onClick={() => handleShareImage("dark")}
+                    className="flex-1 py-3 bg-[#1a1a1a] text-[#f9f8f0] border border-background/20 font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary transition-all"
+                  >
+                    <span className="flex items-center justify-center gap-1.5">
+                      <Image className="w-3.5 h-3.5" /> Dark
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => handleShareImage("cream")}
+                    className="flex-1 py-3 bg-[#f9f8f0] text-[#1a1a1a] border border-background/20 font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary transition-all"
+                  >
+                    <span className="flex items-center justify-center gap-1.5">
+                      <Image className="w-3.5 h-3.5" /> Cream
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
 
       {/* Themes section — editorial grid */}
