@@ -49,6 +49,8 @@ export default function HomePage() {
     const textColor = bg === "dark" ? "#f9f8f0" : "#1a1a1a";
     const mutedColor = bg === "dark" ? "rgba(249,248,240,0.4)" : "rgba(26,26,26,0.4)";
     const accentColor = bg === "dark" ? "#e85d5d" : "#c44040";
+    const badgeColor = bg === "dark" ? "#e85d5d" : "#d4736e";
+    const badgeTextColor = bg === "dark" ? "#fff" : "#f9f8f0";
 
     // Accent bar
     ctx.fillStyle = accentColor;
