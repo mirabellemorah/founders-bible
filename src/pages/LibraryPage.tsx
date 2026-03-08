@@ -1,19 +1,17 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bookmark, Loader2, ArrowRight, Search, X, Share2, ChevronDown, BookOpen, Image } from "lucide-react";
+import { Bookmark, Loader2, ArrowRight, Search, ChevronDown, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { themes, fetchScripturesByTheme, type Theme, type Scripture } from "@/data/scriptures";
-import { fetchBiblePassage, type BiblePassage } from "@/lib/bibleApi";
+import { fetchBiblePassage, fetchBibleChapter, parseReference, allPopularBooks, type BiblePassage } from "@/lib/bibleApi";
 import { useFavorites } from "@/hooks/useFavorites";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
+import VerseActionBar from "@/components/VerseActionBar";
 
 const positiveThemes = ["Leadership", "Courage", "Faith", "Patience", "Discipline", "Purpose", "Wisdom", "Perseverance", "Hope", "Love", "Humility", "Gratitude", "Trust", "Strength", "Peace", "Integrity"];
 const realThemes = ["Fear", "Money", "Negotiation", "Anxiety", "Failure", "Anger", "Jealousy", "Loneliness", "Doubt", "Greed", "Pride", "Suffering"];
 
 const SCRIPTURES_PER_PAGE = 5;
-
-// Common bible books for quick access
-const popularBooks = ["Genesis", "Psalms", "Proverbs", "Isaiah", "Matthew", "John", "Romans", "Philippians", "James", "Revelation"];
 
 export default function LibraryPage() {
   const [searchParams] = useSearchParams();
@@ -24,7 +22,6 @@ export default function LibraryPage() {
   const [activeCategory, setActiveCategory] = useState<"all" | "positive" | "real">("all");
   const [visibleCount, setVisibleCount] = useState(SCRIPTURES_PER_PAGE);
   const { toggle, isFavorite } = useFavorites();
-  const stickyRef = useRef<HTMLDivElement>(null);
 
   // Bible tab state
   const [activeTab, setActiveTab] = useState<"themes" | "bible">("themes");
@@ -32,11 +29,12 @@ export default function LibraryPage() {
   const [bibleResult, setBibleResult] = useState<BiblePassage | null>(null);
   const [bibleLoading, setBibleLoading] = useState(false);
   const [bibleError, setBibleError] = useState("");
+  const [currentBook, setCurrentBook] = useState("");
+  const [currentChapter, setCurrentChapter] = useState(1);
 
-  // Highlight state
-  const [highlightedText, setHighlightedText] = useState("");
-  const [highlightRef, setHighlightRef] = useState("");
-  const [showHighlightBar, setShowHighlightBar] = useState(false);
+  // Tap-to-select verse
+  const [selectedVerse, setSelectedVerse] = useState<{ text: string; reference: string; id?: string } | null>(null);
+  const [selectedBibleVerse, setSelectedBibleVerse] = useState<{ text: string; verse: number } | null>(null);
 
   useEffect(() => {
     if (selectedTheme) {
@@ -60,115 +58,59 @@ export default function LibraryPage() {
   const visibleScriptures = filteredScriptures.slice(0, visibleCount);
   const hasMore = visibleCount < filteredScriptures.length;
 
-  const handleBibleSearch = async () => {
-    if (!bibleSearch.trim()) return;
+  const handleBibleSearch = async (ref?: string) => {
+    const query = ref || bibleSearch.trim();
+    if (!query) return;
     setBibleLoading(true);
     setBibleError("");
     setBibleResult(null);
-    const result = await fetchBiblePassage(bibleSearch.trim());
+    setSelectedBibleVerse(null);
+    const result = await fetchBiblePassage(query);
     if (result) {
       setBibleResult(result);
+      const parsed = parseReference(result.reference);
+      if (parsed) {
+        setCurrentBook(parsed.book);
+        setCurrentChapter(parsed.chapter);
+      }
     } else {
       setBibleError("Could not find that reference. Try something like \"John 3:16\" or \"Psalm 23\".");
     }
     setBibleLoading(false);
   };
 
-  // Handle text selection for highlighting
-  const handleTextSelection = useCallback((reference: string) => {
-    const selection = window.getSelection();
-    const text = selection?.toString().trim();
-    if (text && text.length > 5) {
-      setHighlightedText(text);
-      setHighlightRef(reference);
-      setShowHighlightBar(true);
-    }
-  }, []);
-
-  const handleShareHighlight = async (mode: "text" | "dark" | "cream") => {
-    if (!highlightedText) return;
-
-    if (mode === "text") {
-      const shareText = `"${highlightedText}"\n${highlightRef}\n\nvia Founder's Bible`;
-      if (navigator.share) {
-        await navigator.share({ text: shareText });
-      } else {
-        await navigator.clipboard.writeText(shareText);
-        toast.success("Copied to clipboard");
-      }
+  const navigateChapter = async (direction: -1 | 1) => {
+    if (!currentBook) return;
+    const nextChapter = currentChapter + direction;
+    if (nextChapter < 1) return;
+    setBibleLoading(true);
+    setBibleError("");
+    setSelectedBibleVerse(null);
+    const result = await fetchBibleChapter(currentBook, nextChapter);
+    if (result && result.verses.length > 0) {
+      setBibleResult(result);
+      setCurrentChapter(nextChapter);
+      setBibleSearch(`${currentBook} ${nextChapter}`);
     } else {
-      // Generate image
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d")!;
-      const w = 1080, h = 1350;
-      canvas.width = w;
-      canvas.height = h;
-
-      const isDark = mode === "dark";
-      ctx.fillStyle = isDark ? "#1a1a1a" : "#f9f8f0";
-      ctx.fillRect(0, 0, w, h);
-
-      const textColor = isDark ? "#f9f8f0" : "#1a1a1a";
-      const accentColor = isDark ? "#e85d5d" : "#c44040";
-      const mutedColor = isDark ? "rgba(249,248,240,0.4)" : "rgba(26,26,26,0.4)";
-
-      // Accent bar
-      ctx.fillStyle = accentColor;
-      ctx.fillRect(80, 80, 6, 120);
-
-      // Quote text
-      ctx.fillStyle = textColor;
-      ctx.font = "italic 44px Georgia, serif";
-      const words = highlightedText.split(" ");
-      const lines: string[] = [];
-      let currentLine = "\u201C";
-      for (const word of words) {
-        const test = currentLine + word + " ";
-        if (ctx.measureText(test).width > w - 200) {
-          lines.push(currentLine.trim());
-          currentLine = word + " ";
-        } else {
-          currentLine = test;
-        }
-      }
-      lines.push(currentLine.trim() + "\u201D");
-
-      let y = 200;
-      for (const line of lines) {
-        ctx.fillText(line, 110, y);
-        y += 60;
-      }
-
-      // Reference
-      ctx.fillStyle = accentColor;
-      ctx.fillRect(110, y + 20, 60, 3);
-      ctx.font = "bold 20px sans-serif";
-      ctx.fillText(highlightRef.toUpperCase(), 190, y + 28);
-
-      // Branding
-      ctx.fillStyle = mutedColor;
-      ctx.font = "bold 14px sans-serif";
-      ctx.fillText("FOUNDER'S BIBLE", 110, h - 80);
-
-      canvas.toBlob(async (blob) => {
-        if (!blob) return;
-        const file = new File([blob], "founders-bible-highlight.png", { type: "image/png" });
-        if (navigator.share && navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file] });
-        } else {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "founders-bible-highlight.png";
-          a.click();
-          URL.revokeObjectURL(url);
-          toast.success("Image downloaded");
-        }
-      }, "image/png");
+      toast.info(direction === 1 ? "No more chapters" : "Already at chapter 1");
     }
+    setBibleLoading(false);
+  };
 
-    setShowHighlightBar(false);
-    setHighlightedText("");
+  const handleVerseSelect = (s: Scripture) => {
+    if (selectedVerse?.id === s.id) {
+      setSelectedVerse(null);
+    } else {
+      setSelectedVerse({ text: s.text, reference: s.reference, id: s.id });
+    }
+  };
+
+  const handleBibleVerseSelect = (v: { verse: number; text: string }) => {
+    if (selectedBibleVerse?.verse === v.verse) {
+      setSelectedBibleVerse(null);
+    } else {
+      setSelectedBibleVerse(v);
+    }
   };
 
   return (
@@ -192,7 +134,7 @@ export default function LibraryPage() {
         </p>
       </div>
 
-      {/* Main tabs: Themes / Bible */}
+      {/* Main tabs */}
       <div className="flex gap-0 mb-5 border-b-2 border-foreground">
         {[
           { key: "themes" as const, label: "Themes" },
@@ -200,7 +142,7 @@ export default function LibraryPage() {
         ].map(({ key, label }) => (
           <button
             key={key}
-            onClick={() => setActiveTab(key)}
+            onClick={() => { setActiveTab(key); setSelectedVerse(null); setSelectedBibleVerse(null); }}
             className={`flex-1 py-3 text-[11px] font-body font-bold uppercase tracking-wider transition-all border-b-2 -mb-[2px] ${
               activeTab === key
                 ? "border-primary text-primary"
@@ -211,52 +153,6 @@ export default function LibraryPage() {
           </button>
         ))}
       </div>
-
-      {/* Highlight action bar */}
-      <AnimatePresence>
-        {showHighlightBar && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="fixed top-0 left-0 right-0 z-50 bg-foreground p-4 shadow-lg"
-          >
-            <div className="max-w-lg mx-auto">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-background/60">
-                  Selected text
-                </p>
-                <button onClick={() => { setShowHighlightBar(false); setHighlightedText(""); }}>
-                  <X className="w-4 h-4 text-background/60" />
-                </button>
-              </div>
-              <p className="text-xs font-body text-background/80 italic line-clamp-2 mb-3">
-                "{highlightedText}"
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleShareHighlight("text")}
-                  className="flex-1 py-2.5 border border-background/20 text-background font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-1.5"
-                >
-                  <Share2 className="w-3.5 h-3.5" /> Text
-                </button>
-                <button
-                  onClick={() => handleShareHighlight("dark")}
-                  className="flex-1 py-2.5 bg-[hsl(var(--card))] text-foreground border border-background/20 font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary transition-all flex items-center justify-center gap-1.5"
-                >
-                  <Image className="w-3.5 h-3.5" /> Dark
-                </button>
-                <button
-                  onClick={() => handleShareHighlight("cream")}
-                  className="flex-1 py-2.5 bg-background text-foreground border border-background/20 font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary transition-all flex items-center justify-center gap-1.5"
-                >
-                  <Image className="w-3.5 h-3.5" /> Cream
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {activeTab === "themes" && (
         <>
@@ -269,7 +165,7 @@ export default function LibraryPage() {
             ].map(({ key, label }) => (
               <button
                 key={key}
-                onClick={() => { setActiveCategory(key); setSelectedTheme(null); }}
+                onClick={() => { setActiveCategory(key); setSelectedTheme(null); setSelectedVerse(null); }}
                 className={`px-4 py-2 text-[11px] font-body font-bold uppercase tracking-wider transition-all border-2 ${
                   activeCategory === key
                     ? "bg-foreground text-background border-foreground"
@@ -286,7 +182,7 @@ export default function LibraryPage() {
             {displayThemes.map((theme, i) => (
               <div key={theme}>
                 <button
-                  onClick={() => setSelectedTheme(selectedTheme === theme ? null : theme)}
+                  onClick={() => { setSelectedTheme(selectedTheme === theme ? null : theme); setSelectedVerse(null); }}
                   className={`w-full flex items-center justify-between px-4 py-4 transition-all border-b ${
                     selectedTheme === theme
                       ? "bg-foreground text-background border-foreground sticky top-0 z-30"
@@ -331,47 +227,56 @@ export default function LibraryPage() {
                       ) : (
                         <div className="py-3 px-4 space-y-3">
                           {visibleScriptures.map((s, si) => (
-                            <motion.div
-                              key={s.id}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: si * 0.05 }}
-                              className="bg-card border-l-4 border-primary p-4"
-                              onMouseUp={() => handleTextSelection(s.reference)}
-                              onTouchEnd={() => setTimeout(() => handleTextSelection(s.reference), 300)}
-                            >
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground">
-                                  {s.translation}
-                                </span>
-                              </div>
-                              <p className="font-display text-sm italic leading-relaxed text-foreground select-text">
-                                "{s.text}"
-                              </p>
-                              <div className="flex items-center justify-between mt-3">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-4 h-0.5 bg-primary" />
-                                  <p className="text-[10px] font-body font-bold uppercase tracking-widest text-primary">{s.reference}</p>
+                            <div key={s.id}>
+                              <motion.div
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: si * 0.05 }}
+                                onClick={() => handleVerseSelect(s)}
+                                className={`bg-card border-l-4 border-primary p-4 cursor-pointer transition-all ${
+                                  selectedVerse?.id === s.id
+                                    ? "ring-2 ring-primary/30"
+                                    : "hover:bg-secondary"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground">
+                                    {s.translation}
+                                  </span>
                                 </div>
-                                <button
-                                  onClick={() => {
-                                    toggle(s.id);
-                                    toast.success(isFavorite(s.id) ? "Removed" : "Saved");
-                                  }}
-                                >
+                                <p className={`font-display text-sm italic leading-relaxed text-foreground ${
+                                  selectedVerse?.id === s.id ? "underline decoration-dotted decoration-primary underline-offset-4" : ""
+                                }`}>
+                                  "{s.text}"
+                                </p>
+                                <div className="flex items-center justify-between mt-3">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-4 h-0.5 bg-primary" />
+                                    <p className="text-[10px] font-body font-bold uppercase tracking-widest text-primary">{s.reference}</p>
+                                  </div>
                                   <Bookmark
                                     className={`w-4 h-4 ${isFavorite(s.id) ? "text-primary fill-primary" : "text-muted-foreground"}`}
                                     strokeWidth={2}
                                   />
-                                </button>
-                              </div>
-                              <p className="mt-2 text-xs font-body text-muted-foreground leading-relaxed">
-                                {s.reflection}
-                              </p>
-                            </motion.div>
+                                </div>
+                                <p className="mt-2 text-xs font-body text-muted-foreground leading-relaxed">
+                                  {s.reflection}
+                                </p>
+                              </motion.div>
+
+                              <AnimatePresence>
+                                {selectedVerse?.id === s.id && (
+                                  <VerseActionBar
+                                    verseText={s.text}
+                                    reference={s.reference}
+                                    scriptureId={s.id}
+                                    onClose={() => setSelectedVerse(null)}
+                                  />
+                                )}
+                              </AnimatePresence>
+                            </div>
                           ))}
 
-                          {/* Load More button */}
                           {hasMore && (
                             <button
                               onClick={() => setVisibleCount(prev => prev + SCRIPTURES_PER_PAGE)}
@@ -403,12 +308,12 @@ export default function LibraryPage() {
                 value={bibleSearch}
                 onChange={(e) => setBibleSearch(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleBibleSearch()}
-                placeholder='Search e.g. "John 3:16" or "Psalm 23"'
+                placeholder='Search e.g. "John 3:16" or "Sirach 2"'
                 className="w-full pl-10 pr-4 py-3 bg-secondary text-foreground font-body text-sm border-2 border-transparent focus:border-primary outline-none placeholder:text-muted-foreground"
               />
             </div>
             <button
-              onClick={handleBibleSearch}
+              onClick={() => handleBibleSearch()}
               disabled={bibleLoading}
               className="px-5 py-3 bg-foreground text-background font-body text-[11px] font-bold uppercase tracking-wider hover:bg-primary transition-all disabled:opacity-50"
             >
@@ -418,10 +323,10 @@ export default function LibraryPage() {
 
           {/* Quick access books */}
           <div className="flex gap-2 flex-wrap mb-6">
-            {popularBooks.map((book) => (
+            {allPopularBooks.map((book) => (
               <button
                 key={book}
-                onClick={() => { setBibleSearch(`${book} 1`); }}
+                onClick={() => { setBibleSearch(`${book} 1`); handleBibleSearch(`${book} 1`); }}
                 className="px-3 py-1.5 text-[10px] font-body font-bold uppercase tracking-wider border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all"
               >
                 {book}
@@ -445,17 +350,73 @@ export default function LibraryPage() {
                 </span>
               </div>
 
-              <div
-                className="space-y-2 select-text"
-                onMouseUp={() => handleTextSelection(bibleResult.reference)}
-                onTouchEnd={() => setTimeout(() => handleTextSelection(bibleResult.reference), 300)}
-              >
-                {bibleResult.verses.map((v) => (
-                  <p key={`${v.book_id}-${v.chapter}-${v.verse}`} className="text-sm font-body leading-relaxed text-foreground">
-                    <span className="text-[10px] font-bold text-primary mr-1.5 align-super">{v.verse}</span>
-                    {v.text.trim()}
-                  </p>
-                ))}
+              {/* Chapter navigation */}
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={() => navigateChapter(-1)}
+                  disabled={bibleLoading || currentChapter <= 1}
+                  className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-body font-bold uppercase tracking-wider border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-30"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" /> Prev Chapter
+                </button>
+                <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground">
+                  Ch. {currentChapter}
+                </span>
+                <button
+                  onClick={() => navigateChapter(1)}
+                  disabled={bibleLoading}
+                  className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-body font-bold uppercase tracking-wider border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-30"
+                >
+                  Next Chapter <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="space-y-1">
+                {bibleResult.verses.map((v) => {
+                  const isSelected = selectedBibleVerse?.verse === v.verse;
+                  return (
+                    <div key={`${v.book_id}-${v.chapter}-${v.verse}`}>
+                      <p
+                        onClick={() => handleBibleVerseSelect(v)}
+                        className={`text-sm font-body leading-relaxed text-foreground py-1 px-2 -mx-2 cursor-pointer rounded transition-all ${
+                          isSelected
+                            ? "bg-primary/10 underline decoration-dotted decoration-primary underline-offset-4"
+                            : "hover:bg-secondary"
+                        }`}
+                      >
+                        <span className="text-[10px] font-bold text-primary mr-1.5 align-super">{v.verse}</span>
+                        {v.text.trim()}
+                      </p>
+                      <AnimatePresence>
+                        {isSelected && bibleResult && (
+                          <VerseActionBar
+                            verseText={v.text.trim()}
+                            reference={`${bibleResult.reference.split(":")[0]}:${v.verse}`}
+                            onClose={() => setSelectedBibleVerse(null)}
+                          />
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Bottom chapter navigation */}
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+                <button
+                  onClick={() => navigateChapter(-1)}
+                  disabled={bibleLoading || currentChapter <= 1}
+                  className="flex items-center gap-1.5 px-4 py-2.5 text-[10px] font-body font-bold uppercase tracking-wider bg-foreground text-background hover:bg-primary transition-all disabled:opacity-30"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" /> Previous
+                </button>
+                <button
+                  onClick={() => navigateChapter(1)}
+                  disabled={bibleLoading}
+                  className="flex items-center gap-1.5 px-4 py-2.5 text-[10px] font-body font-bold uppercase tracking-wider bg-foreground text-background hover:bg-primary transition-all disabled:opacity-30"
+                >
+                  Next <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             </motion.div>
           )}
@@ -469,7 +430,7 @@ export default function LibraryPage() {
                 SEARCH THE <span className="italic text-primary">BIBLE</span>
               </p>
               <p className="text-xs text-muted-foreground font-body mt-2 max-w-[260px] mx-auto">
-                Enter any book, chapter, or verse reference to read the full text.
+                Enter any book, chapter, or verse reference. Includes deuterocanonical books like Sirach and Wisdom of Solomon.
               </p>
             </div>
           )}
