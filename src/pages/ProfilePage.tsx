@@ -311,7 +311,9 @@ export default function ProfilePage() {
       <div className="mt-5">
         <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-muted-foreground mb-2 px-1">Settings</p>
         
-        {settings.map(({ icon: Icon, label, action, panel }) => (
+        {settings.map(({ icon: Icon, label, action, panel }) => {
+          const isOpen = panel?.show ?? false;
+          return (
           <div key={label}>
             <button
               onClick={action}
@@ -321,7 +323,12 @@ export default function ProfilePage() {
                 <Icon className="w-4 h-4 text-muted-foreground" strokeWidth={2} />
                 <span className="text-sm font-body font-semibold text-foreground">{label}</span>
               </div>
-              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" strokeWidth={2} />
+              <motion.div
+                animate={{ rotate: isOpen ? 90 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" strokeWidth={2} />
+              </motion.div>
             </button>
             {panel && (
               <AnimatePresence>
