@@ -297,9 +297,9 @@ export default function LibraryPage() {
   const renderScriptureCard = (s: Scripture, index: number, isMobile = false) => (
     <div key={s.id}>
       <motion.div
-        initial={{ opacity: 0, x: isMobile ? -10 : 10 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: index * 0.05 }}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.04, duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
         onClick={() => handleVerseSelect(s)}
         className={`bg-card border-l-4 border-primary ${isMobile ? "p-4" : "p-6"} cursor-pointer transition-all ${
           selectedVerse?.id === s.id ? "ring-2 ring-primary/30 shadow-md" : "hover:bg-secondary"
