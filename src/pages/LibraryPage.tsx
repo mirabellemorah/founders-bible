@@ -232,7 +232,7 @@ export default function LibraryPage() {
               initial={{ opacity: 0, y: -8, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -6, scale: 0.97 }}
-              transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+              transition={{ duration: 0.2, ease: "easeOut" as const }}
               className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 bg-card border border-border shadow-lg rounded-sm p-3 w-[280px] max-h-[240px] overflow-y-auto"
             >
               <p className="text-[9px] font-body font-bold uppercase tracking-wider text-muted-foreground mb-2">{selectedBook.name} · Jump to chapter</p>
