@@ -208,6 +208,91 @@ export default function LibraryPage() {
     setSelectedBibleVerse(selectedBibleVerse?.verse === v.verse ? null : v);
   };
 
+  // ─── Chapter floating selector ───
+  const renderChapterSelector = () => {
+    if (!selectedBook || !selectedChapter) return null;
+    return (
+      <div className="relative" ref={dropdownRef}>
+        <button
+          onClick={() => setChapterDropdownOpen(!chapterDropdownOpen)}
+          className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-body font-bold uppercase tracking-wider bg-secondary text-foreground border border-border hover:border-primary transition-colors duration-200 ease-out rounded-sm"
+        >
+          Ch. {selectedChapter}
+          <motion.div animate={{ rotate: chapterDropdownOpen ? 180 : 0 }} transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}>
+            <ChevronDown className="w-3.5 h-3.5" />
+          </motion.div>
+        </button>
+        <AnimatePresence>
+          {chapterDropdownOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.97 }}
+              transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 bg-card border border-border shadow-lg rounded-sm p-3 w-[280px] max-h-[240px] overflow-y-auto"
+            >
+              <p className="text-[9px] font-body font-bold uppercase tracking-wider text-muted-foreground mb-2">{selectedBook.name} · Jump to chapter</p>
+              <div className="grid grid-cols-6 gap-1.5">
+                {Array.from({ length: selectedBook.chapters }, (_, i) => i + 1).map((ch) => (
+                  <motion.button
+                    key={ch}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => jumpToChapter(ch)}
+                    className={`py-1.5 text-xs font-body font-bold rounded-sm transition-colors duration-150 ease-out ${
+                      selectedChapter === ch
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-secondary text-foreground hover:bg-primary/20 border border-border"
+                    }`}
+                  >
+                    {ch}
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
+
+  // ─── Chapter navigation bar ───
+  const renderChapterNav = (position: "top" | "bottom") => {
+    if (!selectedBook || !selectedChapter) return null;
+    const isTop = position === "top";
+    return (
+      <div className={`flex items-center justify-between ${isTop ? "mb-4" : "mt-6 pt-4 border-t border-border"}`}>
+        <motion.button
+          whileHover={{ x: -2 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => navigateChapter(-1)}
+          disabled={bookLoading || selectedChapter <= 1}
+          className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-body font-bold uppercase tracking-wider transition-colors duration-200 ease-out disabled:opacity-30 ${
+            isTop ? "border border-border text-muted-foreground hover:border-primary hover:text-primary" : "bg-foreground text-background hover:bg-primary"
+          }`}
+        >
+          <ChevronLeft className="w-3.5 h-3.5" /> Prev
+        </motion.button>
+        {isTop ? renderChapterSelector() : (
+          <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground">
+            {selectedChapter} / {selectedBook.chapters}
+          </span>
+        )}
+        <motion.button
+          whileHover={{ x: 2 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => navigateChapter(1)}
+          disabled={bookLoading || selectedChapter >= selectedBook.chapters}
+          className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-body font-bold uppercase tracking-wider transition-colors duration-200 ease-out disabled:opacity-30 ${
+            isTop ? "border border-border text-muted-foreground hover:border-primary hover:text-primary" : "bg-foreground text-background hover:bg-primary"
+          }`}
+        >
+          Next <ChevronRight className="w-3.5 h-3.5" />
+        </motion.button>
+      </div>
+    );
+  };
+
   // ─── Render helpers ───
   const renderScriptureCard = (s: Scripture, index: number, isMobile = false) => (
     <div key={s.id}>
