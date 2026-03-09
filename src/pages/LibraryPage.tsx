@@ -677,7 +677,7 @@ export default function LibraryPage() {
                       <motion.button key={book.name}
                         initial={{ opacity: 0, x: -8 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.02, duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+                        transition={{ delay: idx * 0.02, duration: 0.3, ease: "easeOut" as const }}
                         whileTap={{ scale: 0.98, backgroundColor: "hsl(var(--secondary))" }}
                         onClick={() => { setSelectedBook(book); setSelectedChapter(null); setPassage(null); setBookError(""); }}
                         className="w-full flex items-center justify-between px-4 py-3.5 text-sm font-body font-bold text-foreground border-b border-border hover:bg-secondary transition-colors duration-200 ease-out">
