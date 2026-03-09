@@ -655,7 +655,7 @@ export default function LibraryPage() {
                       <motion.button key={ch}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: idx * 0.012, duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+                        transition={{ delay: idx * 0.012, duration: 0.25, ease: "easeOut" as const }}
                         whileHover={{ scale: 1.08, transition: { duration: 0.15 } }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => handleLoadChapter(selectedBook, ch)}
