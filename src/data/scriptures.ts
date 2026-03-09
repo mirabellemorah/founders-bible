@@ -115,6 +115,18 @@ export async function fetchDailyScripture(preferredVersion?: string): Promise<Sc
     .select()
     .maybeSingle();
 
+  if (preferredVersion && selected.translation !== preferredVersion) {
+    const { data: matches } = await supabase
+      .from("scriptures")
+      .select("*")
+      .eq("reference", selected.reference);
+      
+    if (matches && matches.length > 0) {
+      const preferred = matches.find(m => m.translation === preferredVersion);
+      return preferred || selected;
+    }
+  }
+
   return selected;
 }
 
