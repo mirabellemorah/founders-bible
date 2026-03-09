@@ -61,6 +61,23 @@ export default function ProfilePage() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notifTime, setNotifTime] = useState(() => localStorage.getItem("fb-notif-time") || "08:00");
 
+  // Bible version
+  const bibleVersions = [
+    { id: "web", label: "WEB (World English Bible)" },
+    { id: "kjv", label: "KJV (King James Version)" },
+    { id: "bbe", label: "BBE (Bible in Basic English)" },
+    { id: "almeida", label: "ALMEIDA (João Ferreira de Almeida)" }
+  ];
+  const [showBibleVersion, setShowBibleVersion] = useState(false);
+  const [bibleVersion, setBibleVersion] = useState(() => localStorage.getItem("fb-bible-version") || "web");
+
+  const handleBibleVersionChange = (version: string) => {
+    setBibleVersion(version);
+    localStorage.setItem("fb-bible-version", version);
+    toast.success(`Bible version updated to ${version.toUpperCase()}`);
+    // Optionally reload or let components read from local storage when they mount
+  };
+
   // Color mode
   const [showColors, setShowColors] = useState(false);
   const [colorMode, setColorMode] = useState<ColorMode>(() =>
@@ -219,11 +236,38 @@ export default function ProfilePage() {
     </div>
   );
 
+  const bibleVersionPanel = (
+    <div className="bg-card border-2 border-foreground/10 p-4">
+      <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-primary mb-3">Bible Version</p>
+      <div className="flex flex-col gap-2">
+        {bibleVersions.map(v => (
+          <button
+            key={v.id}
+            onClick={() => handleBibleVersionChange(v.id)}
+            className={`text-left px-3 py-2 text-xs font-body font-bold tracking-wider border-2 transition-all ${
+              bibleVersion === v.id
+                ? "bg-foreground text-background border-foreground"
+                : "bg-transparent text-muted-foreground border-border hover:border-foreground"
+            }`}
+          >
+            {v.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   const settings: { icon: any; label: string; action: () => void; panel?: { show: boolean; content: React.ReactNode } }[] = [
     {
       icon: Pencil,
       label: "Edit Name",
       action: () => { setNameInput(name); setEditingName(true); },
+    },
+    {
+      icon: BookOpen,
+      label: `Bible Version: ${bibleVersions.find(v => v.id === bibleVersion)?.id.toUpperCase() || "WEB"}`,
+      action: () => setShowBibleVersion(prev => !prev),
+      panel: { show: showBibleVersion, content: bibleVersionPanel },
     },
     {
       icon: Droplets,

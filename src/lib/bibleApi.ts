@@ -23,7 +23,8 @@ export interface BiblePassage {
  */
 export async function fetchBiblePassage(reference: string): Promise<BiblePassage | null> {
   try {
-    const res = await fetch(`${BASE_URL}/${encodeURIComponent(reference)}`);
+    const version = localStorage.getItem("fb-bible-version") || "web";
+    const res = await fetch(`${BASE_URL}/${encodeURIComponent(reference)}?translation=${version}`);
     if (!res.ok) return null;
     const data = await res.json();
     if (data.error) return null;

@@ -41,7 +41,19 @@ export default function LibraryPage() {
       setLoadingTheme(true);
       setVisibleCount(SCRIPTURES_PER_PAGE);
       fetchScripturesByTheme(selectedTheme).then((s) => {
-        setFilteredScriptures(s);
+        const preferredVersion = (localStorage.getItem("fb-bible-version") || "web").toUpperCase();
+        const grouped = new Map<string, Scripture>();
+        s.forEach(scripture => {
+          const key = scripture.reference;
+          if (!grouped.has(key)) {
+            grouped.set(key, scripture);
+          } else {
+            if (scripture.translation === preferredVersion) {
+              grouped.set(key, scripture);
+            }
+          }
+        });
+        setFilteredScriptures(Array.from(grouped.values()));
         setLoadingTheme(false);
       });
     } else {
