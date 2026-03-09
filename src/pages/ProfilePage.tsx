@@ -121,15 +121,19 @@ export default function ProfilePage() {
   const toggleNotifications = async () => {
     if (!notificationsEnabled) {
       const granted = await requestNotificationPermission();
-      if (!granted) {
-        toast.error("Please allow notifications in your browser settings");
-        return;
-      }
+      
+      // We still enable the UI so users can configure it, 
+      // but we warn them if the browser blocked the actual push notifications.
       setNotificationsEnabled(true);
       localStorage.setItem("fb-notifications", "true");
       setShowTimePicker(true);
       startNotificationScheduler();
-      toast.success("Notifications enabled");
+      
+      if (granted) {
+        toast.success("Notifications enabled");
+      } else {
+        toast.warning("Notifications enabled in app, but your browser is blocking them. (This is normal in the preview editor)");
+      }
     } else {
       setNotificationsEnabled(false);
       localStorage.setItem("fb-notifications", "false");
