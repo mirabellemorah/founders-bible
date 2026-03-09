@@ -222,7 +222,7 @@ export default function LibraryPage() {
           className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-body font-bold uppercase tracking-wider bg-secondary text-foreground border border-border hover:border-primary transition-colors duration-200 ease-out rounded-sm"
         >
           Ch. {selectedChapter}
-          <motion.div animate={{ rotate: chapterDropdownOpen ? 180 : 0 }} transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}>
+          <motion.div animate={{ rotate: chapterDropdownOpen ? 180 : 0 }} transition={{ duration: 0.25, ease: "easeOut" as const }}>
             <ChevronDown className="w-3.5 h-3.5" />
           </motion.div>
         </button>
