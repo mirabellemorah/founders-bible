@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, BookOpen, Flame, Heart, Moon, Sun, Bell, BellOff, Info, ArrowRight, Pencil, Check, X, Palette, Clock, Droplets } from "lucide-react";
+import { User, BookOpen, Flame, Heart, Moon, Sun, Bell, BellOff, Info, ArrowRight, Pencil, Check, X, Palette, Clock, Droplets, Download } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { themes } from "@/data/scriptures";
 import { toast } from "sonner";
 import { requestNotificationPermission, startNotificationScheduler, stopNotificationScheduler } from "@/lib/notifications";
-
+import { triggerInstallPrompt } from "@/components/InstallPrompt";
 const virtueThemes = ["Leadership", "Courage", "Faith", "Patience", "Discipline", "Purpose", "Wisdom", "Perseverance", "Hope", "Love", "Humility", "Gratitude", "Trust", "Strength", "Peace", "Integrity"];
 const realTalkThemes = ["Fear", "Money", "Negotiation", "Anxiety", "Failure", "Anger", "Jealousy", "Loneliness", "Doubt", "Greed", "Pride", "Suffering"];
 
