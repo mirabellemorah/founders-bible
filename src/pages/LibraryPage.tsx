@@ -212,13 +212,16 @@ export default function LibraryPage() {
     setSelectedBibleVerse(selectedBibleVerse?.verse === v.verse ? null : v);
   };
 
-  // ─── Chapter floating selector ───
+  // ─── Chapter floating selector (mobile only) ───
   const renderChapterSelector = () => {
     if (!selectedBook || !selectedChapter) return null;
     return (
-      <div className="relative" ref={dropdownRef}>
+      <div className="relative md:hidden" ref={dropdownRef}>
         <button
-          onClick={() => setChapterDropdownOpen(!chapterDropdownOpen)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setChapterDropdownOpen(prev => !prev);
+          }}
           className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-body font-bold uppercase tracking-wider bg-secondary text-foreground border border-border hover:border-primary transition-colors duration-200 ease-out rounded-sm"
         >
           Ch. {selectedChapter}
