@@ -39,6 +39,14 @@
 </head>
 
   <body>
+    <script>
+      (function() {
+        var saved = localStorage.getItem('fb-dark-mode');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var isDark = saved !== null ? saved === 'true' : prefersDark;
+        if (isDark) document.documentElement.classList.add('dark');
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
