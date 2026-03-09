@@ -303,7 +303,7 @@ export default function LibraryPage() {
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.04, duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+        transition={{ delay: index * 0.04, duration: 0.35, ease: "easeOut" as const }}
         onClick={() => handleVerseSelect(s)}
         className={`bg-card border-l-4 border-primary ${isMobile ? "p-4" : "p-6"} cursor-pointer transition-all ${
           selectedVerse?.id === s.id ? "ring-2 ring-primary/30 shadow-md" : "hover:bg-secondary"
