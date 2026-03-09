@@ -1,7 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Smartphone, Share, Plus } from "lucide-react";
+import { X, Share, Plus, Smartphone, Download } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+// Event system to trigger prompt from anywhere
+const installPromptListeners: Set<() => void> = new Set();
+
+export function triggerInstallPrompt() {
+  installPromptListeners.forEach(listener => listener());
+}
 
 export function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
@@ -9,14 +16,7 @@ export function InstallPrompt() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    // Only show on mobile devices
-    if (!isMobile) return;
-
-    // Check if user has already seen the prompt
-    const hasSeenPrompt = localStorage.getItem('fb-install-prompt-seen') === 'true';
-    if (hasSeenPrompt) return;
-
-    // Detect platform
+    // Detect platform on mount
     const userAgent = navigator.userAgent.toLowerCase();
     if (/iphone|ipad|ipod/.test(userAgent)) {
       setPlatform('ios');
@@ -26,12 +26,23 @@ export function InstallPrompt() {
       setPlatform('other');
     }
 
-    // Show prompt after a short delay
-    const timer = setTimeout(() => {
-      setShowPrompt(true);
-    }, 2000);
+    // Register listener for manual trigger
+    const showPromptHandler = () => setShowPrompt(true);
+    installPromptListeners.add(showPromptHandler);
 
-    return () => clearTimeout(timer);
+    // Auto-show on mobile if not seen before
+    if (isMobile) {
+      const hasSeenPrompt = localStorage.getItem('fb-install-prompt-seen') === 'true';
+      if (!hasSeenPrompt) {
+        const timer = setTimeout(() => setShowPrompt(true), 2000);
+        return () => {
+          clearTimeout(timer);
+          installPromptListeners.delete(showPromptHandler);
+        };
+      }
+    }
+
+    return () => installPromptListeners.delete(showPromptHandler);
   }, [isMobile]);
 
   const dismissPrompt = () => {
@@ -43,32 +54,18 @@ export function InstallPrompt() {
     switch (platform) {
       case 'ios':
         return {
-          title: "Install Founder's Bible",
-          steps: [
-            "Tap the Share button at the bottom of your screen",
-            "Scroll down and tap 'Add to Home Screen'",
-            "Tap 'Add' to confirm"
-          ],
-          icon: <Share className="w-6 h-6 text-primary" />
+          steps: ["Tap Share button", "Tap 'Add to Home Screen'"],
+          icon: <Share className="w-5 h-5 text-primary" />
         };
       case 'android':
         return {
-          title: "Install Founder's Bible", 
-          steps: [
-            "Tap the menu button (⋮) at the top right",
-            "Select 'Add to Home screen' or 'Install app'",
-            "Tap 'Add' to confirm"
-          ],
-          icon: <Plus className="w-6 h-6 text-primary" />
+          steps: ["Tap menu (⋮)", "Select 'Install app'"],
+          icon: <Plus className="w-5 h-5 text-primary" />
         };
       default:
         return {
-          title: "Install Founder's Bible",
-          steps: [
-            "Look for 'Add to Home Screen' in your browser menu",
-            "Follow the prompts to install the app"
-          ],
-          icon: <Smartphone className="w-6 h-6 text-primary" />
+          steps: ["Find 'Add to Home Screen' in browser menu"],
+          icon: <Smartphone className="w-5 h-5 text-primary" />
         };
     }
   };
@@ -82,72 +79,47 @@ export function InstallPrompt() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 z-50 flex items-end"
+          className="fixed inset-0 bg-black/50 z-50 flex items-end pb-20"
+          onClick={dismissPrompt}
         >
           <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="w-full bg-background rounded-t-2xl p-6 max-h-[70vh] overflow-y-auto"
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ type: "spring", damping: 30, stiffness: 350 }}
+            className="w-full mx-4 mb-2 bg-card border-2 border-border rounded-lg p-4 shadow-lg"
+            onClick={e => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                {instructions.icon}
-                <h2 className="font-display text-xl font-bold text-foreground">
-                  {instructions.title}
-                </h2>
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                <Download className="w-5 h-5 text-primary" />
               </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="font-display text-sm font-bold text-foreground">Install App</h3>
+                  <button onClick={dismissPrompt} className="p-1 -mr-1 text-muted-foreground hover:text-foreground">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                  {instructions.icon}
+                  <span>{instructions.steps.join(" → ")}</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-3">
               <button
                 onClick={dismissPrompt}
-                className="p-2 hover:bg-muted rounded-full transition-colors"
+                className="flex-1 py-2 text-xs font-body font-semibold text-muted-foreground bg-muted rounded transition-colors hover:bg-muted/80"
               >
-                <X className="w-5 h-5 text-muted-foreground" />
+                Later
               </button>
-            </div>
-
-            {/* Content */}
-            <div className="space-y-4">
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Get quick access to daily scripture and reflections by adding this app to your home screen.
-              </p>
-
-              <div className="space-y-3">
-                <p className="font-display text-sm font-semibold text-foreground uppercase tracking-wider">
-                  How to Install:
-                </p>
-                {instructions.steps.map((step, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <span className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
-                      {index + 1}
-                    </span>
-                    <p className="text-sm text-foreground leading-relaxed">
-                      {step}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Action buttons */}
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={dismissPrompt}
-                  className="flex-1 py-3 px-4 bg-muted text-muted-foreground font-body font-medium text-sm rounded-lg transition-colors hover:bg-muted/80"
-                >
-                  Maybe Later
-                </button>
-                <button
-                  onClick={dismissPrompt}
-                  className="flex-1 py-3 px-4 bg-primary text-primary-foreground font-body font-bold text-sm rounded-lg transition-colors hover:bg-primary/90"
-                >
-                  Got It
-                </button>
-              </div>
-
-              <p className="text-center text-xs text-muted-foreground mt-4">
-                Works offline • No app store needed
-              </p>
+              <button
+                onClick={dismissPrompt}
+                className="flex-1 py-2 text-xs font-body font-bold text-primary-foreground bg-primary rounded transition-colors hover:bg-primary/90"
+              >
+                Got It
+              </button>
             </div>
           </motion.div>
         </motion.div>

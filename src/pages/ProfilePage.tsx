@@ -307,6 +307,11 @@ export default function ProfilePage() {
       panel: notificationsEnabled ? { show: showTimePicker, content: timePanel } : undefined,
     },
     {
+      icon: Download,
+      label: "Install App",
+      action: () => triggerInstallPrompt(),
+    },
+    {
       icon: Info,
       label: "About Founder's Bible",
       action: () => toast("Founder's Bible — Biblical wisdom for builders, leaders, and dreamers. Built by Mirabelle Morah. v1.0"),
