@@ -28,7 +28,6 @@ export default function LibraryPage() {
   // AI-expanded theme verses
   const [aiVerses, setAiVerses] = useState<ThemeVerse[]>([]);
   const [loadingAi, setLoadingAi] = useState(false);
-  const [showAiVerses, setShowAiVerses] = useState(false);
 
   // Main tab state
   const [activeTab, setActiveTab] = useState<"themes" | "bible" | "browse">("themes");
@@ -40,6 +39,8 @@ export default function LibraryPage() {
   const [bibleError, setBibleError] = useState("");
   const [currentBook, setCurrentBook] = useState("");
   const [currentChapter, setCurrentChapter] = useState(1);
+  const [isKeywordSearch, setIsKeywordSearch] = useState(false);
+  const [keywordResults, setKeywordResults] = useState<{ verse: { text: string; verse: number; chapter: number; book_name: string }; reference: string }[]>([]);
 
   // Bible browser state
   const [browseTestament, setBrowseTestament] = useState<"OT" | "NT" | "DC">("OT");
@@ -59,7 +60,6 @@ export default function LibraryPage() {
     if (selectedTheme) {
       setLoadingTheme(true);
       setVisibleCount(SCRIPTURES_PER_PAGE);
-      setShowAiVerses(false);
       setAiVerses([]);
       fetchScripturesByTheme(selectedTheme).then((s) => {
         const filtered = s.filter(sc => sc.translation === preferredVersion);
@@ -81,17 +81,25 @@ export default function LibraryPage() {
     }
   }, [selectedTheme, preferredVersion]);
 
-  // Load AI-expanded verses for a theme
-  const loadAiVerses = useCallback(async () => {
+  // Load more AI verses for a theme (can be called multiple times)
+  const loadMoreAiVerses = useCallback(async () => {
     if (!selectedTheme || loadingAi) return;
     setLoadingAi(true);
-    setShowAiVerses(true);
     const verses = await fetchThemeVerses(selectedTheme);
     // Hydrate each verse with actual Bible text
     const hydrated = await Promise.all(verses.map(v => hydrateVerse(v)));
-    setAiVerses(hydrated);
+    // Filter out verses we already have
+    const existingRefs = new Set([
+      ...filteredScriptures.map(s => s.reference.toLowerCase()),
+      ...aiVerses.map(v => v.reference.toLowerCase())
+    ]);
+    const newVerses = hydrated.filter(v => !existingRefs.has(v.reference.toLowerCase()));
+    setAiVerses(prev => [...prev, ...newVerses]);
     setLoadingAi(false);
-  }, [selectedTheme, loadingAi]);
+    if (newVerses.length === 0) {
+      toast.info("No new verses found. Try again for more!");
+    }
+  }, [selectedTheme, loadingAi, filteredScriptures, aiVerses]);
 
   // User theme prefs
   const userThemes = (() => {
@@ -116,13 +124,52 @@ export default function LibraryPage() {
     setBibleError("");
     setBibleResult(null);
     setSelectedBibleVerse(null);
-    const result = await fetchBiblePassage(query);
-    if (result) {
-      setBibleResult(result);
-      const parsed = parseReference(result.reference);
-      if (parsed) { setCurrentBook(parsed.book); setCurrentChapter(parsed.chapter); }
+    setKeywordResults([]);
+    
+    // Detect if this is a keyword search (no numbers = keyword)
+    const isKeyword = !/\d/.test(query);
+    setIsKeywordSearch(isKeyword);
+    
+    if (isKeyword) {
+      // Keyword search - search across popular chapters
+      const searchBooks = ["Psalms", "Proverbs", "Matthew", "John", "Romans", "1 Corinthians", "Philippians", "James", "Genesis", "Isaiah"];
+      const results: { verse: { text: string; verse: number; chapter: number; book_name: string }; reference: string }[] = [];
+      const keyword = query.toLowerCase();
+      
+      for (const book of searchBooks) {
+        // Search first few chapters of each book
+        for (let ch = 1; ch <= 5; ch++) {
+          const passage = await fetchBibleChapter(book, ch);
+          if (passage?.verses) {
+            for (const v of passage.verses) {
+              if (v.text.toLowerCase().includes(keyword)) {
+                results.push({
+                  verse: { ...v, chapter: ch, book_name: book },
+                  reference: `${book} ${ch}:${v.verse}`
+                });
+                if (results.length >= 20) break;
+              }
+            }
+          }
+          if (results.length >= 20) break;
+        }
+        if (results.length >= 20) break;
+      }
+      
+      setKeywordResults(results);
+      if (results.length === 0) {
+        setBibleError(`No verses found containing "${query}". Try another word like "love", "hope", or "strength".`);
+      }
     } else {
-      setBibleError("Could not find that reference. Try something like \"John 3:16\" or \"Psalm 23\".");
+      // Reference search
+      const result = await fetchBiblePassage(query);
+      if (result) {
+        setBibleResult(result);
+        const parsed = parseReference(result.reference);
+        if (parsed) { setCurrentBook(parsed.book); setCurrentChapter(parsed.chapter); }
+      } else {
+        setBibleError("Could not find that reference. Try something like \"John 3:16\" or \"Psalm 23\".");
+      }
     }
     setBibleLoading(false);
   };
@@ -239,6 +286,21 @@ export default function LibraryPage() {
     </div>
   );
 
+  const renderAiVerseCard = (v: ThemeVerse, vi: number, isMobile: boolean) => (
+    <motion.div key={`ai-${vi}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: vi * 0.08 }}
+      className={`bg-card border-l-4 border-accent ${isMobile ? "p-4" : "p-6"}`}>
+      <p className={`${isMobile ? "text-[10px]" : "text-xs"} font-body font-bold uppercase tracking-wider text-primary mb-2`}>{v.reference}</p>
+      {v.passage ? (
+        <p className={`font-display ${isMobile ? "text-sm" : "text-lg"} italic leading-relaxed text-foreground`}>
+          "{v.passage.text.trim()}"
+        </p>
+      ) : (
+        <p className={`${isMobile ? "text-xs" : "text-sm"} font-body text-muted-foreground italic`}>Could not load verse text</p>
+      )}
+      <p className={`mt-2 ${isMobile ? "text-xs" : "text-sm"} font-body text-muted-foreground leading-relaxed`}>{v.reason}</p>
+    </motion.div>
+  );
+
   return (
     <div className="px-5">
       {/* Hero header */}
@@ -337,51 +399,36 @@ export default function LibraryPage() {
                           <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
                         ) : (
                           <div className="py-3 px-4 space-y-3">
-                            {filteredScriptures.length === 0 && !showAiVerses && (
+                            {filteredScriptures.length === 0 && aiVerses.length === 0 && (
                               <p className="text-sm text-muted-foreground font-body py-2 text-center">No pre-seeded scriptures for this theme.</p>
                             )}
                             {visibleScriptures.map((s, si) => renderScriptureCard(s, si, true))}
-                            {hasMore && (
-                              <button onClick={() => setVisibleCount(prev => prev + SCRIPTURES_PER_PAGE)}
-                                className="w-full flex items-center justify-center gap-2 py-3 border border-border text-muted-foreground font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all">
-                                <ChevronDown className="w-3.5 h-3.5" /> Load More ({filteredScriptures.length - visibleCount} remaining)
-                              </button>
-                            )}
-                            {/* AI Discover More */}
-                            {!showAiVerses && (
-                              <button onClick={loadAiVerses} disabled={loadingAi}
-                                className="w-full flex items-center justify-center gap-2 py-3 bg-primary/10 border border-primary/30 text-primary font-body text-[10px] font-bold uppercase tracking-wider hover:bg-primary/20 transition-all mt-2">
-                                <Sparkles className="w-3.5 h-3.5" /> Discover more from the entire Bible
-                              </button>
-                            )}
-                            {loadingAi && (
-                              <div className="flex items-center justify-center gap-2 py-6">
-                                <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                                <span className="text-xs font-body text-muted-foreground">Finding verses across the Bible...</span>
-                              </div>
-                            )}
-                            {showAiVerses && aiVerses.length > 0 && (
+                            
+                            {/* AI Verses */}
+                            {aiVerses.length > 0 && (
                               <div className="space-y-3 mt-2">
                                 <div className="flex items-center gap-2 pb-2 border-b border-primary/20">
                                   <Sparkles className="w-3.5 h-3.5 text-primary" />
-                                  <span className="text-[10px] font-body font-bold uppercase tracking-wider text-primary">From the entire Bible</span>
+                                  <span className="text-[10px] font-body font-bold uppercase tracking-wider text-primary">Discovered from the Bible</span>
                                 </div>
-                                {aiVerses.map((v, vi) => (
-                                  <motion.div key={vi} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: vi * 0.08 }}
-                                    className="bg-card border-l-4 border-accent p-4">
-                                    <p className="text-[10px] font-body font-bold uppercase tracking-wider text-primary mb-2">{v.reference}</p>
-                                    {v.passage ? (
-                                      <p className="font-display text-sm italic leading-relaxed text-foreground">
-                                        "{v.passage.text.trim()}"
-                                      </p>
-                                    ) : (
-                                      <p className="text-xs font-body text-muted-foreground italic">Could not load verse text</p>
-                                    )}
-                                    <p className="mt-2 text-xs font-body text-muted-foreground leading-relaxed">{v.reason}</p>
-                                  </motion.div>
-                                ))}
+                                {aiVerses.map((v, vi) => renderAiVerseCard(v, vi, true))}
                               </div>
                             )}
+
+                            {/* Unified discover more button */}
+                            <button onClick={hasMore ? () => setVisibleCount(prev => prev + SCRIPTURES_PER_PAGE) : loadMoreAiVerses} disabled={loadingAi}
+                              className="w-full flex items-center justify-center gap-2 py-3 bg-primary/10 border border-primary/30 text-primary font-body text-[10px] font-bold uppercase tracking-wider hover:bg-primary/20 transition-all mt-2 disabled:opacity-50">
+                              {loadingAi ? (
+                                <>
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Finding verses...
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles className="w-3.5 h-3.5" /> 
+                                  {hasMore ? `Show More (${filteredScriptures.length - visibleCount} remaining)` : "Discover More"}
+                                </>
+                              )}
+                            </button>
                           </div>
                         )}
                       </motion.div>
@@ -401,7 +448,7 @@ export default function LibraryPage() {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <h3 className="font-display text-3xl font-black mb-6 text-foreground border-b border-border pb-4">{selectedTheme}</h3>
                   
-                  {filteredScriptures.length === 0 && !showAiVerses && (
+                  {filteredScriptures.length === 0 && aiVerses.length === 0 && (
                     <p className="text-muted-foreground font-body py-8 text-center">No pre-seeded scriptures for this theme.</p>
                   )}
 
@@ -409,52 +456,33 @@ export default function LibraryPage() {
                     {visibleScriptures.map((s, si) => renderScriptureCard(s, si, false))}
                   </div>
 
-                  {hasMore && (
-                    <button onClick={() => setVisibleCount(prev => prev + SCRIPTURES_PER_PAGE)}
-                      className="w-full flex items-center justify-center gap-2 py-4 border border-border text-muted-foreground font-body text-xs font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all mt-6">
-                      <ChevronDown className="w-4 h-4" /> Load More ({filteredScriptures.length - visibleCount} remaining)
-                    </button>
-                  )}
-
-                  {/* AI Expand */}
-                  {!showAiVerses && (
-                    <button onClick={loadAiVerses} disabled={loadingAi}
-                      className="w-full flex items-center justify-center gap-2 py-4 bg-primary/10 border border-primary/30 text-primary font-body text-xs font-bold uppercase tracking-wider hover:bg-primary/20 transition-all mt-6">
-                      <Sparkles className="w-4 h-4" /> Discover more verses from the entire Bible
-                    </button>
-                  )}
-
-                  {loadingAi && (
-                    <div className="flex items-center justify-center gap-3 py-12">
-                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                      <span className="text-sm font-body text-muted-foreground">AI is finding relevant verses across the entire Bible...</span>
-                    </div>
-                  )}
-
-                  {showAiVerses && aiVerses.length > 0 && (
+                  {/* AI Verses */}
+                  {aiVerses.length > 0 && (
                     <div className="mt-8">
                       <div className="flex items-center gap-2 pb-3 mb-6 border-b border-primary/20">
                         <Sparkles className="w-4 h-4 text-primary" />
-                        <span className="text-xs font-body font-bold uppercase tracking-wider text-primary">More from the entire Bible</span>
+                        <span className="text-xs font-body font-bold uppercase tracking-wider text-primary">Discovered from the Bible</span>
                       </div>
                       <div className="space-y-6">
-                        {aiVerses.map((v, vi) => (
-                          <motion.div key={vi} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: vi * 0.08 }}
-                            className="bg-background border-l-4 border-accent p-6">
-                            <p className="text-xs font-body font-bold uppercase tracking-wider text-primary mb-3">{v.reference}</p>
-                            {v.passage ? (
-                              <p className="font-display text-lg italic leading-relaxed text-foreground">
-                                "{v.passage.text.trim()}"
-                              </p>
-                            ) : (
-                              <p className="text-sm font-body text-muted-foreground italic">Could not load verse text</p>
-                            )}
-                            <p className="mt-3 text-sm font-body text-muted-foreground leading-relaxed">{v.reason}</p>
-                          </motion.div>
-                        ))}
+                        {aiVerses.map((v, vi) => renderAiVerseCard(v, vi, false))}
                       </div>
                     </div>
                   )}
+
+                  {/* Unified discover more button */}
+                  <button onClick={hasMore ? () => setVisibleCount(prev => prev + SCRIPTURES_PER_PAGE) : loadMoreAiVerses} disabled={loadingAi}
+                    className="w-full flex items-center justify-center gap-2 py-4 bg-primary/10 border border-primary/30 text-primary font-body text-xs font-bold uppercase tracking-wider hover:bg-primary/20 transition-all mt-6 disabled:opacity-50">
+                    {loadingAi ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Finding verses across the Bible...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" /> 
+                        {hasMore ? `Show More (${filteredScriptures.length - visibleCount} remaining)` : "Discover More"}
+                      </>
+                    )}
+                  </button>
                 </motion.div>
               )
             ) : (
@@ -478,7 +506,7 @@ export default function LibraryPage() {
                 value={bibleSearch}
                 onChange={(e) => setBibleSearch(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleBibleSearch()}
-                placeholder='Search e.g. "John 3:16", "Psalm 23", "Romans 8:28-39"'
+                placeholder='Search "John 3:16" or words like "fear", "love", "hope"'
                 className="w-full pl-10 pr-4 py-3 bg-secondary text-foreground font-body text-sm border-2 border-transparent focus:border-primary outline-none placeholder:text-muted-foreground"
               />
             </div>
@@ -501,9 +529,47 @@ export default function LibraryPage() {
             </div>
           </div>
 
+          {/* Keyword suggestions */}
+          <div className="mb-6">
+            <p className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground mb-3">Search by Word</p>
+            <div className="flex gap-2 flex-wrap">
+              {["fear", "love", "hope", "faith", "peace", "strength", "wisdom", "trust", "joy", "grace"].map((word) => (
+                <button key={word} onClick={() => { setBibleSearch(word); handleBibleSearch(word); }}
+                  className="px-3 py-1.5 text-[10px] font-body font-bold uppercase tracking-wider bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition-all">
+                  {word}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {bibleError && <div className="text-center py-8"><p className="text-sm font-body text-muted-foreground">{bibleError}</p></div>}
 
-          {bibleResult && (
+          {/* Keyword search results */}
+          {isKeywordSearch && keywordResults.length > 0 && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <div className="flex items-center gap-3 mb-4 border-b-2 border-foreground pb-2">
+                <Search className="w-4 h-4 text-primary" />
+                <h2 className="font-display text-lg font-bold text-foreground">Results for "{bibleSearch}"</h2>
+                <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground ml-auto">
+                  {keywordResults.length} verses
+                </span>
+              </div>
+              <div className="space-y-3">
+                {keywordResults.map((result, i) => (
+                  <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
+                    className="bg-card border-l-4 border-primary p-4">
+                    <p className="text-[10px] font-body font-bold uppercase tracking-wider text-primary mb-2">{result.reference}</p>
+                    <p className="text-sm font-body leading-relaxed text-foreground">
+                      {result.verse.text.trim()}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Reference search results */}
+          {!isKeywordSearch && bibleResult && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <div className="flex items-center gap-3 mb-4 border-b-2 border-foreground pb-2">
                 <BookOpen className="w-4 h-4 text-primary" />
@@ -540,7 +606,7 @@ export default function LibraryPage() {
             </motion.div>
           )}
 
-          {!bibleResult && !bibleError && !bibleLoading && (
+          {!bibleResult && !bibleError && !bibleLoading && keywordResults.length === 0 && (
             <div className="text-center py-16">
               <div className="w-16 h-16 bg-foreground flex items-center justify-center mx-auto mb-4">
                 <Search className="w-6 h-6 text-primary" strokeWidth={1.5} />
@@ -549,7 +615,7 @@ export default function LibraryPage() {
                 SEARCH THE <span className="italic text-primary">BIBLE</span>
               </p>
               <p className="text-xs text-muted-foreground font-body mt-2 max-w-[260px] mx-auto">
-                Enter any book, chapter, or verse reference to read it instantly.
+                Enter a reference like "John 3:16" or search keywords like "fear" or "love".
               </p>
             </div>
           )}
@@ -577,46 +643,76 @@ export default function LibraryPage() {
               ))}
             </div>
 
-            {/* Book list */}
+            {/* Book list with inline chapter expansion */}
             <div className="max-h-[50vh] md:max-h-[70vh] overflow-y-auto border-t border-border">
               {getBooksByTestament(browseTestament).map((book) => (
-                <button key={book.name}
-                  onClick={() => { setBrowseBook(browseBook?.name === book.name ? null : book); setBrowseChapter(null); setBrowsePassage(null); }}
-                  className={`w-full text-left px-4 py-3 text-sm font-body font-bold transition-all border-b border-border ${
-                    browseBook?.name === book.name ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"
-                  }`}>
-                  <div className="flex items-center justify-between">
-                    <span>{book.name}</span>
-                    <span className="text-[10px] font-body text-muted-foreground">{book.chapters} ch</span>
-                  </div>
-                </button>
+                <div key={book.name}>
+                  <button
+                    onClick={() => { 
+                      if (browseBook?.name === book.name) {
+                        setBrowseBook(null); 
+                        setBrowseChapter(null); 
+                        setBrowsePassage(null);
+                      } else {
+                        setBrowseBook(book); 
+                        setBrowseChapter(null); 
+                        setBrowsePassage(null);
+                      }
+                    }}
+                    className={`w-full text-left px-4 py-3 text-sm font-body font-bold transition-all border-b border-border ${
+                      browseBook?.name === book.name ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"
+                    }`}>
+                    <div className="flex items-center justify-between">
+                      <span>{book.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-body ${browseBook?.name === book.name ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{book.chapters} ch</span>
+                        <motion.div animate={{ rotate: browseBook?.name === book.name ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                          <ChevronDown className={`w-4 h-4 ${browseBook?.name === book.name ? "text-primary-foreground" : "text-muted-foreground"}`} />
+                        </motion.div>
+                      </div>
+                    </div>
+                  </button>
+                  
+                  {/* Inline chapter grid */}
+                  <AnimatePresence>
+                    {browseBook?.name === book.name && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden bg-secondary/50 border-b border-border"
+                      >
+                        <div className="p-3">
+                          <p className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground mb-2">Select Chapter</p>
+                          <div className="grid grid-cols-6 sm:grid-cols-8 gap-1.5">
+                            {Array.from({ length: book.chapters }, (_, i) => i + 1).map((ch) => (
+                              <button key={ch} onClick={() => handleBrowseChapter(book, ch)}
+                                className={`py-2 text-xs font-body font-bold border transition-all ${
+                                  browseChapter === ch 
+                                    ? "bg-primary text-primary-foreground border-primary" 
+                                    : "border-border text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary"
+                                }`}>
+                                {ch}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               ))}
             </div>
           </div>
 
-          {/* Right: Chapter selector + reading pane */}
+          {/* Right: Reading pane */}
           <div className="flex-1 mt-4 md:mt-0">
-            {browseBook && !browseChapter && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <h3 className="font-display text-2xl font-black text-foreground mb-4">{browseBook.name}</h3>
-                <p className="text-xs font-body text-muted-foreground mb-4">{browseBook.chapters} chapters · Select a chapter to read</p>
-                <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
-                  {Array.from({ length: browseBook.chapters }, (_, i) => i + 1).map((ch) => (
-                    <button key={ch} onClick={() => handleBrowseChapter(browseBook, ch)}
-                      className="py-3 text-sm font-body font-bold border border-border text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all">
-                      {ch}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
             {browseBook && browseChapter && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <div className="flex items-center gap-3 mb-4">
                   <button onClick={() => { setBrowseChapter(null); setBrowsePassage(null); }}
                     className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-all flex items-center gap-1">
-                    <ChevronLeft className="w-3.5 h-3.5" /> Chapters
+                    <ChevronLeft className="w-3.5 h-3.5" /> Back
                   </button>
                   <h3 className="font-display text-xl font-bold text-foreground">{browseBook.name} {browseChapter}</h3>
                 </div>
@@ -650,9 +746,21 @@ export default function LibraryPage() {
                     </div>
                   </>
                 ) : (
-                  <p className="text-muted-foreground font-body text-center py-8">Could not load this chapter.</p>
+                  <p className="text-muted-foreground font-body text-center py-8">Could not load this chapter. The API may not support this book.</p>
                 )}
               </motion.div>
+            )}
+
+            {browseBook && !browseChapter && (
+              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+                <BookOpen className="w-16 h-16 mb-4 opacity-10" />
+                <p className="font-display text-xl font-black text-foreground tracking-tight">
+                  {browseBook.name}
+                </p>
+                <p className="text-xs text-muted-foreground font-body mt-2">
+                  Select a chapter from the dropdown to start reading.
+                </p>
+              </div>
             )}
 
             {!browseBook && (
