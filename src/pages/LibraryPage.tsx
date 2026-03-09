@@ -192,13 +192,12 @@ export default function LibraryPage() {
     setBibleLoading(false);
   };
 
-  // Browse handlers - use abbreviation for API
+  // Browse handlers
   const handleBrowseChapter = async (book: BibleBook, chapter: number) => {
     setBrowseLoading(true);
     setBrowseChapter(chapter);
     setSelectedBibleVerse(null);
-    // Use the book abbreviation for the API call
-    const result = await fetchBibleChapter(book.abbrev || book.name, chapter);
+    const result = await fetchBibleChapter(book.name, chapter);
     setBrowsePassage(result);
     setBrowseLoading(false);
   };
