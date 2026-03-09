@@ -4,7 +4,8 @@ import { User, BookOpen, Flame, Heart, Moon, Sun, Bell, BellOff, Info, ArrowRigh
 import { useFavorites } from "@/hooks/useFavorites";
 import { themes } from "@/data/scriptures";
 import { toast } from "sonner";
-import { requestNotificationPermission, startNotificationScheduler, stopNotificationScheduler } from "@/lib/notifications";
+import { requestNotificationPermission, startNotificationScheduler, stopNotificationScheduler, scheduleDailyNotification, cancelDailyNotification } from "@/lib/notifications";
+import { Capacitor } from "@capacitor/core";
 import { triggerInstallPrompt } from "@/components/InstallPrompt";
 const virtueThemes = ["Leadership", "Courage", "Faith", "Patience", "Discipline", "Purpose", "Wisdom", "Perseverance", "Hope", "Love", "Humility", "Gratitude", "Trust", "Strength", "Peace", "Integrity"];
 const realTalkThemes = ["Fear", "Money", "Negotiation", "Anxiety", "Failure", "Anger", "Jealousy", "Loneliness", "Doubt", "Greed", "Pride", "Suffering"];
