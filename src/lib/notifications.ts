@@ -5,10 +5,15 @@ export async function requestNotificationPermission(): Promise<boolean> {
   if (!("Notification" in window)) {
     return false;
   }
-  if (Notification.permission === "granted") return true;
-  if (Notification.permission === "denied") return false;
-  const result = await Notification.requestPermission();
-  return result === "granted";
+  try {
+    if (Notification.permission === "granted") return true;
+    if (Notification.permission === "denied") return false;
+    const result = await Notification.requestPermission();
+    return result === "granted";
+  } catch (error) {
+    console.warn("Failed to request notification permission:", error);
+    return false;
+  }
 }
 
 /**
