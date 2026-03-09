@@ -119,35 +119,33 @@ export default function ProfilePage() {
     return () => stopNotificationScheduler();
   }, [notificationsEnabled]);
 
-  const toggleNotifications = async () => {
+  const enableNotifications = async (time: string) => {
+    setNotifTime(time);
+    setTempTime(time);
+    localStorage.setItem("fb-notif-time", time);
+    
     if (!notificationsEnabled) {
       const granted = await requestNotificationPermission();
       
-      // We still enable the UI so users can configure it, 
-      // but we warn them if the browser blocked the actual push notifications.
       setNotificationsEnabled(true);
       localStorage.setItem("fb-notifications", "true");
-      setShowTimePicker(true);
       startNotificationScheduler();
       
       if (granted) {
-        toast.success("Notifications enabled");
+        toast.success(`Notifications enabled for ${time}`);
       } else {
         toast.warning("Notifications enabled in app, but your browser is blocking them. (This is normal in the preview editor)");
       }
     } else {
-      setNotificationsEnabled(false);
-      localStorage.setItem("fb-notifications", "false");
-      setShowTimePicker(false);
-      stopNotificationScheduler();
-      toast.success("Notifications disabled");
+      toast.success(`Notification time set to ${time}`);
     }
   };
 
-  const handleTimeChange = (time: string) => {
-    setNotifTime(time);
-    localStorage.setItem("fb-notif-time", time);
-    toast.success(`Notification time set to ${time}`);
+  const disableNotifications = () => {
+    setNotificationsEnabled(false);
+    localStorage.setItem("fb-notifications", "false");
+    stopNotificationScheduler();
+    toast.success("Notifications disabled");
   };
 
   const handleColorChange = (mode: ColorMode) => {
