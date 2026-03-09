@@ -178,8 +178,27 @@ export default function LibraryPage() {
       toast.info(direction === 1 ? "End of book" : "Already at chapter 1");
       return;
     }
+    setChapterDirection(direction);
     await handleLoadChapter(selectedBook, next);
   };
+
+  const jumpToChapter = async (ch: number) => {
+    if (!selectedBook) return;
+    setChapterDirection(ch > (selectedChapter || 1) ? 1 : -1);
+    setChapterDropdownOpen(false);
+    await handleLoadChapter(selectedBook, ch);
+  };
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setChapterDropdownOpen(false);
+      }
+    };
+    if (chapterDropdownOpen) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [chapterDropdownOpen]);
 
   const handleVerseSelect = (s: Scripture) => {
     setSelectedVerse(selectedVerse?.id === s.id ? null : { text: s.text, reference: s.reference, id: s.id });
