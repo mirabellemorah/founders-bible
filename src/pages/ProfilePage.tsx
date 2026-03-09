@@ -130,22 +130,45 @@ export default function ProfilePage() {
       
       setNotificationsEnabled(true);
       localStorage.setItem("fb-notifications", "true");
-      startNotificationScheduler();
       
-      if (granted) {
-        toast.success(`Notifications enabled for ${time}`);
+      // On native platforms, use reliable daily scheduled notifications
+      if (Capacitor.isNativePlatform()) {
+        await scheduleDailyNotification(time);
+        if (granted) {
+          toast.success(`Daily notifications scheduled for ${time}`);
+        } else {
+          toast.warning("Notifications enabled but permission was denied");
+        }
       } else {
-        toast.warning("Notifications enabled in app, but your browser is blocking them. (This is normal in the preview editor)");
+        // On web, use interval-based approach
+        startNotificationScheduler();
+        if (granted) {
+          toast.success(`Notifications enabled for ${time}`);
+        } else {
+          toast.warning("Notifications enabled in app, but your browser is blocking them. (This is normal in the preview editor)");
+        }
       }
     } else {
-      toast.success(`Notification time set to ${time}`);
+      // Update existing notification time
+      if (Capacitor.isNativePlatform()) {
+        await scheduleDailyNotification(time);
+        toast.success(`Notification time updated to ${time}`);
+      } else {
+        toast.success(`Notification time set to ${time}`);
+      }
     }
   };
 
-  const disableNotifications = () => {
+  const disableNotifications = async () => {
     setNotificationsEnabled(false);
     localStorage.setItem("fb-notifications", "false");
-    stopNotificationScheduler();
+    
+    if (Capacitor.isNativePlatform()) {
+      await cancelDailyNotification();
+    } else {
+      stopNotificationScheduler();
+    }
+    
     toast.success("Notifications disabled");
   };
 
