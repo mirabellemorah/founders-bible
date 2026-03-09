@@ -236,11 +236,38 @@ export default function ProfilePage() {
     </div>
   );
 
+  const bibleVersionPanel = (
+    <div className="bg-card border-2 border-foreground/10 p-4">
+      <p className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-primary mb-3">Bible Version</p>
+      <div className="flex flex-col gap-2">
+        {bibleVersions.map(v => (
+          <button
+            key={v.id}
+            onClick={() => handleBibleVersionChange(v.id)}
+            className={`text-left px-3 py-2 text-xs font-body font-bold tracking-wider border-2 transition-all ${
+              bibleVersion === v.id
+                ? "bg-foreground text-background border-foreground"
+                : "bg-transparent text-muted-foreground border-border hover:border-foreground"
+            }`}
+          >
+            {v.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   const settings: { icon: any; label: string; action: () => void; panel?: { show: boolean; content: React.ReactNode } }[] = [
     {
       icon: Pencil,
       label: "Edit Name",
       action: () => { setNameInput(name); setEditingName(true); },
+    },
+    {
+      icon: BookOpen,
+      label: `Bible Version: ${bibleVersions.find(v => v.id === bibleVersion)?.id.toUpperCase() || "WEB"}`,
+      action: () => setShowBibleVersion(prev => !prev),
+      panel: { show: showBibleVersion, content: bibleVersionPanel },
     },
     {
       icon: Droplets,
