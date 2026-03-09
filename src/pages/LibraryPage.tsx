@@ -43,17 +43,29 @@ export default function LibraryPage() {
       setLoadingTheme(true);
       setVisibleCount(SCRIPTURES_PER_PAGE);
       fetchScripturesByTheme(selectedTheme).then((s) => {
-        // Deduplicate by reference, preferring the user's chosen translation
-        const grouped = new Map<string, Scripture>();
-        s.forEach(scripture => {
-          const key = scripture.reference;
-          if (!grouped.has(key)) {
-            grouped.set(key, scripture);
-          } else if (scripture.translation === preferredVersion) {
-            grouped.set(key, scripture);
-          }
-        });
-        setFilteredScriptures(Array.from(grouped.values()));
+        // Strictly filter to ONLY show the preferred version to ensure no mixed translations
+        const filtered = s.filter(scripture => scripture.translation === preferredVersion);
+        
+        // As a fallback just in case there are no verses in this translation for this theme,
+        // we'll group by reference but force them to the same version visually if we had to, 
+        // but strict filtering handles the "no mixed translations" perfectly.
+        if (filtered.length > 0) {
+          setFilteredScriptures(filtered);
+        } else {
+          // If literally no verses match, we do the deduplication we had before, 
+          // but just strictly filter to the first available translation for the entire theme 
+          // to ensure "no mixed translations" throughout the theme.
+          const fallbackVersion = s.length > 0 ? s[0].translation : preferredVersion;
+          const fallbackFiltered = s.filter(scripture => scripture.translation === fallbackVersion);
+          
+          const grouped = new Map<string, Scripture>();
+          fallbackFiltered.forEach(scripture => {
+            if (!grouped.has(scripture.reference)) {
+              grouped.set(scripture.reference, scripture);
+            }
+          });
+          setFilteredScriptures(Array.from(grouped.values()));
+        }
         setLoadingTheme(false);
       });
     } else {

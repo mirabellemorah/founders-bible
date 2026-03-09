@@ -65,7 +65,7 @@ export async function fetchScripturesByTheme(theme: string): Promise<Scripture[]
   return data || [];
 }
 
-export async function fetchDailyScripture(): Promise<Scripture | null> {
+export async function fetchDailyScripture(preferredVersion?: string): Promise<Scripture | null> {
   const today = new Date().toISOString().split("T")[0];
 
   // Check if we already have a scripture assigned for today
@@ -76,12 +76,24 @@ export async function fetchDailyScripture(): Promise<Scripture | null> {
     .maybeSingle();
 
   if (daily) {
-    const { data } = await supabase
+    const { data: dailyVerse } = await supabase
       .from("scriptures")
       .select("*")
       .eq("id", daily.scripture_id)
       .single();
-    return data;
+      
+    if (dailyVerse && preferredVersion && dailyVerse.translation !== preferredVersion) {
+      const { data: matches } = await supabase
+        .from("scriptures")
+        .select("*")
+        .eq("reference", dailyVerse.reference);
+      
+      if (matches && matches.length > 0) {
+        const preferred = matches.find(m => m.translation === preferredVersion);
+        return preferred || dailyVerse;
+      }
+    }
+    return dailyVerse;
   }
 
   // No scripture for today: pick one deterministically and save it
@@ -102,6 +114,18 @@ export async function fetchDailyScripture(): Promise<Scripture | null> {
     .insert({ date: today, scripture_id: selected.id })
     .select()
     .maybeSingle();
+
+  if (preferredVersion && selected.translation !== preferredVersion) {
+    const { data: matches } = await supabase
+      .from("scriptures")
+      .select("*")
+      .eq("reference", selected.reference);
+      
+    if (matches && matches.length > 0) {
+      const preferred = matches.find(m => m.translation === preferredVersion);
+      return preferred || selected;
+    }
+  }
 
   return selected;
 }

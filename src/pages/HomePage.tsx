@@ -17,7 +17,8 @@ export default function HomePage() {
   const [expandLevel, setExpandLevel] = useState(0);
 
   useEffect(() => {
-    fetchDailyScripture().then((s) => {
+    const preferredVersion = (localStorage.getItem("fb-bible-version") || "kjv").toUpperCase();
+    fetchDailyScripture(preferredVersion).then((s) => {
       setScripture(s);
       setLoading(false);
     });
