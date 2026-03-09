@@ -719,7 +719,7 @@ export default function LibraryPage() {
                         <span>{book.name}</span>
                         <div className="flex items-center gap-2">
                           <span className={`text-[10px] font-body ${selectedBook?.name === book.name ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{book.chapters} ch</span>
-                          <motion.div animate={{ rotate: selectedBook?.name === book.name ? 180 : 0 }} transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}>
+                          <motion.div animate={{ rotate: selectedBook?.name === book.name ? 180 : 0 }} transition={{ duration: 0.25, ease: "easeOut" as const }}>
                             <ChevronDown className={`w-4 h-4 ${selectedBook?.name === book.name ? "text-primary-foreground" : "text-muted-foreground"}`} />
                           </motion.div>
                         </div>
