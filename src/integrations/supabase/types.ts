@@ -75,6 +75,36 @@ export type Database = {
           },
         ]
       }
+      push_tokens: {
+        Row: {
+          created_at: string | null
+          device_id: string
+          id: string
+          platform: string | null
+          token: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_id: string
+          id?: string
+          platform?: string | null
+          token: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device_id?: string
+          id?: string
+          platform?: string | null
+          token?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       scriptures: {
         Row: {
           book: string
