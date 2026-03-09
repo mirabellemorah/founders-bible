@@ -6,7 +6,7 @@ export function AppLayout() {
   const isChat = location.pathname === "/chat";
 
   return (
-    <div className="min-h-screen bg-background max-w-lg mx-auto relative">
+    <div className="min-h-screen bg-background w-full max-w-md md:max-w-2xl lg:max-w-3xl mx-auto relative">
       {/* Top brand bar — editorial style */}
       {!isChat && (
         <div className="px-5 pt-safe">
