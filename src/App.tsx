@@ -26,6 +26,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner position="top-center" />
+      <InstallPrompt />
       <BrowserRouter>
         <Routes>
           <Route path="/welcome" element={<WelcomePage />} />
