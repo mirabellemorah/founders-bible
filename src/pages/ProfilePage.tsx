@@ -60,6 +60,7 @@ export default function ProfilePage() {
   // Notification time
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notifTime, setNotifTime] = useState(() => localStorage.getItem("fb-notif-time") || "08:00");
+  const [tempTime, setTempTime] = useState(notifTime);
 
   // Bible version
   const bibleVersions = [
