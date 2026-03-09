@@ -1,6 +1,10 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { initializePushNotifications } from "./lib/notifications";
+
+// Initialize push notifications (native only)
+initializePushNotifications();
 
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {

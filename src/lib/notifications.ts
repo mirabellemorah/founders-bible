@@ -1,7 +1,65 @@
+import { Capacitor } from "@capacitor/core";
+import { PushNotifications } from "@capacitor/push-notifications";
+import { LocalNotifications } from "@capacitor/local-notifications";
+
 /**
- * Request browser notification permission
+ * Initialize push notifications (native mobile)
+ */
+export async function initializePushNotifications() {
+  if (!Capacitor.isNativePlatform()) {
+    console.log("Not on native platform, skipping push notifications setup");
+    return;
+  }
+
+  try {
+    // Request permission
+    const permResult = await PushNotifications.requestPermissions();
+    if (permResult.receive === "granted") {
+      await PushNotifications.register();
+    }
+
+    // Handle registration success
+    PushNotifications.addListener("registration", (token) => {
+      console.log("Push registration success, token:", token.value);
+      // Store token if you need to send it to your backend
+      localStorage.setItem("fb-push-token", token.value);
+    });
+
+    // Handle registration errors
+    PushNotifications.addListener("registrationError", (error) => {
+      console.error("Push registration error:", error);
+    });
+
+    // Handle push notification received (app in foreground)
+    PushNotifications.addListener("pushNotificationReceived", (notification) => {
+      console.log("Push notification received:", notification);
+    });
+
+    // Handle push notification tapped
+    PushNotifications.addListener("pushNotificationActionPerformed", (notification) => {
+      console.log("Push notification action performed:", notification);
+    });
+  } catch (error) {
+    console.error("Error initializing push notifications:", error);
+  }
+}
+
+/**
+ * Request browser notification permission (web fallback)
  */
 export async function requestNotificationPermission(): Promise<boolean> {
+  // On native, use Capacitor LocalNotifications
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const permResult = await LocalNotifications.requestPermissions();
+      return permResult.display === "granted";
+    } catch (error) {
+      console.warn("Failed to request local notification permission:", error);
+      return false;
+    }
+  }
+
+  // Web fallback
   if (!("Notification" in window)) {
     return false;
   }
@@ -17,14 +75,38 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 /**
- * Show a browser notification
+ * Show a notification (native or browser)
  */
-export function showNotification(title: string, body: string) {
+export async function showNotification(title: string, body: string) {
+  // Native platform
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            title,
+            body,
+            id: Date.now(),
+            schedule: { at: new Date(Date.now() + 1000) }, // Show after 1 second
+            sound: undefined,
+            attachments: undefined,
+            actionTypeId: "",
+            extra: null,
+          },
+        ],
+      });
+    } catch (error) {
+      console.error("Failed to show local notification:", error);
+    }
+    return;
+  }
+
+  // Web fallback
   if (!("Notification" in window) || Notification.permission !== "granted") return;
   new Notification(title, {
     body,
-    icon: "/favicon.ico",
-    badge: "/favicon.ico",
+    icon: "/icon-192x192.png",
+    badge: "/icon-192x192.png",
   });
 }
 
@@ -61,5 +143,60 @@ export function stopNotificationScheduler() {
   if (notifInterval) {
     clearInterval(notifInterval);
     notifInterval = null;
+  }
+}
+
+/**
+ * Schedule daily local notifications (native only, more reliable than interval)
+ */
+export async function scheduleDailyNotification(time: string) {
+  if (!Capacitor.isNativePlatform()) return;
+
+  try {
+    // Cancel existing scheduled notifications
+    await LocalNotifications.cancel({ notifications: [{ id: 999 }] });
+
+    // Parse time (format: "HH:MM")
+    const [hours, minutes] = time.split(":").map(Number);
+    const now = new Date();
+    const scheduledDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
+
+    // If time has passed today, schedule for tomorrow
+    if (scheduledDate < now) {
+      scheduledDate.setDate(scheduledDate.getDate() + 1);
+    }
+
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          title: "Founder's Bible",
+          body: "Your daily scripture is ready. Take a moment to read and reflect.",
+          id: 999,
+          schedule: {
+            at: scheduledDate,
+            every: "day",
+          },
+          sound: undefined,
+          attachments: undefined,
+          actionTypeId: "",
+          extra: null,
+        },
+      ],
+    });
+
+    console.log("Daily notification scheduled for", time);
+  } catch (error) {
+    console.error("Failed to schedule daily notification:", error);
+  }
+}
+
+export async function cancelDailyNotification() {
+  if (!Capacitor.isNativePlatform()) return;
+  
+  try {
+    await LocalNotifications.cancel({ notifications: [{ id: 999 }] });
+    console.log("Daily notification cancelled");
+  } catch (error) {
+    console.error("Failed to cancel daily notification:", error);
   }
 }
