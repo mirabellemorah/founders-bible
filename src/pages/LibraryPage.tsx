@@ -233,7 +233,8 @@ export default function LibraryPage() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -6, scale: 0.97 }}
               transition={{ duration: 0.2, ease: "easeOut" as const }}
-              className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 bg-card border border-border shadow-lg rounded-sm p-3 w-[280px] max-h-[240px] overflow-y-auto"
+              className="fixed left-1/2 -translate-x-1/2 top-auto mt-2 z-50 bg-card border border-border shadow-lg rounded-sm p-3 w-[min(280px,90vw)] max-h-[240px] overflow-y-auto"
+              style={{ top: dropdownRef.current ? dropdownRef.current.getBoundingClientRect().bottom + 8 : undefined }}
             >
               <p className="text-[9px] font-body font-bold uppercase tracking-wider text-muted-foreground mb-2">{selectedBook.name} · Jump to chapter</p>
               <div className="grid grid-cols-6 gap-1.5">
