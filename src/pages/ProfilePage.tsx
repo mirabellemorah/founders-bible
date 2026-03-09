@@ -61,6 +61,23 @@ export default function ProfilePage() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notifTime, setNotifTime] = useState(() => localStorage.getItem("fb-notif-time") || "08:00");
 
+  // Bible version
+  const bibleVersions = [
+    { id: "web", label: "WEB (World English Bible)" },
+    { id: "kjv", label: "KJV (King James Version)" },
+    { id: "bbe", label: "BBE (Bible in Basic English)" },
+    { id: "almeida", label: "ALMEIDA (João Ferreira de Almeida)" }
+  ];
+  const [showBibleVersion, setShowBibleVersion] = useState(false);
+  const [bibleVersion, setBibleVersion] = useState(() => localStorage.getItem("fb-bible-version") || "web");
+
+  const handleBibleVersionChange = (version: string) => {
+    setBibleVersion(version);
+    localStorage.setItem("fb-bible-version", version);
+    toast.success(`Bible version updated to ${version.toUpperCase()}`);
+    // Optionally reload or let components read from local storage when they mount
+  };
+
   // Color mode
   const [showColors, setShowColors] = useState(false);
   const [colorMode, setColorMode] = useState<ColorMode>(() =>
