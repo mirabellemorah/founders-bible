@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bookmark, Loader2, ArrowRight, ChevronDown, BookOpen, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { themes, fetchScripturesByTheme, type Theme, type Scripture } from "@/data/scriptures";
@@ -8,6 +8,25 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 import VerseActionBar from "@/components/VerseActionBar";
+
+// Smooth spring-based transitions
+const smoothSpring = { type: "spring", stiffness: 300, damping: 30, mass: 0.8 };
+const gentleEase = { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] };
+const fadeUp = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0, transition: gentleEase },
+  exit: { opacity: 0, y: -8, transition: { duration: 0.25, ease: [0.55, 0, 1, 0.45] } },
+};
+const slideRight = {
+  initial: { opacity: 0, x: 40 },
+  animate: { opacity: 1, x: 0, transition: smoothSpring },
+  exit: { opacity: 0, x: -30, transition: { duration: 0.25, ease: [0.55, 0, 1, 0.45] } },
+};
+const slideLeft = {
+  initial: { opacity: 0, x: -40 },
+  animate: { opacity: 1, x: 0, transition: smoothSpring },
+  exit: { opacity: 0, x: 30, transition: { duration: 0.25, ease: [0.55, 0, 1, 0.45] } },
+};
 
 const positiveThemes = ["Leadership", "Courage", "Faith", "Patience", "Discipline", "Purpose", "Wisdom", "Perseverance", "Hope", "Love", "Humility", "Gratitude", "Trust", "Strength", "Peace", "Integrity"];
 const realThemes = ["Fear", "Money", "Negotiation", "Anxiety", "Failure", "Anger", "Jealousy", "Loneliness", "Doubt", "Greed", "Pride", "Suffering"];
@@ -64,6 +83,9 @@ export default function LibraryPage() {
   const [passage, setPassage] = useState<BiblePassage | null>(null);
   const [bookLoading, setBookLoading] = useState(false);
   const [bookError, setBookError] = useState("");
+  const [chapterDirection, setChapterDirection] = useState<1 | -1>(1);
+  const [chapterDropdownOpen, setChapterDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Verse selection
   const [selectedVerse, setSelectedVerse] = useState<{ text: string; reference: string; id?: string } | null>(null);
