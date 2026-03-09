@@ -205,23 +205,26 @@ export default function ProfilePage() {
           <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
           <input
             type="time"
-            value={notifTime}
-            onChange={e => {
-              e.preventDefault();
-              if (e.target.value) handleTimeChange(e.target.value);
-            }}
-            onBlur={e => {
-              if (e.target.value && e.target.value !== notifTime) handleTimeChange(e.target.value);
-            }}
+            value={tempTime}
+            onChange={e => setTempTime(e.target.value)}
             className="bg-background text-foreground font-body text-sm font-semibold px-3 py-2 border-2 border-border focus:border-primary outline-none transition-colors"
           />
+          <button
+            onClick={() => enableNotifications(tempTime)}
+            className="px-3 py-2 bg-primary text-primary-foreground font-body text-xs font-bold uppercase tracking-wider transition-colors"
+          >
+            Save
+          </button>
         </form>
         <div className="flex gap-2 flex-wrap">
           {["06:00", "07:00", "08:00", "09:00", "12:00", "21:00"].map(t => (
-            <button key={t} onClick={() => handleTimeChange(t)} className={`px-3 py-1.5 text-[10px] font-body font-bold uppercase tracking-wider border-2 transition-all ${notifTime === t ? "bg-foreground text-background border-foreground" : "bg-transparent text-muted-foreground border-border hover:border-foreground"}`}>
+            <button key={t} onClick={() => enableNotifications(t)} className={`px-3 py-1.5 text-[10px] font-body font-bold uppercase tracking-wider border-2 transition-all ${(notificationsEnabled && notifTime === t) ? "bg-foreground text-background border-foreground" : "bg-transparent text-muted-foreground border-border hover:border-foreground"}`}>
               {t}
             </button>
           ))}
+          <button onClick={disableNotifications} className={`px-3 py-1.5 text-[10px] font-body font-bold uppercase tracking-wider border-2 transition-all ${!notificationsEnabled ? "bg-red-500 text-white border-red-500" : "bg-transparent text-red-500 border-border hover:border-red-500"}`}>
+            OFF
+          </button>
         </div>
       </div>
     </div>
