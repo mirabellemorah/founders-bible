@@ -60,19 +60,19 @@ export default function VerseActionBar({ verseText, reference, scriptureId, onCl
 
     const textColor = isDark ? "#f9f8f0" : "#1a1a1a";
     const accentColor = isDark ? "#e85d5d" : "#c44040";
-    const mutedColor = isDark ? "rgba(249,248,240,0.4)" : "rgba(26,26,26,0.4)";
+    const mutedColor = isDark ? "rgba(249,248,240,0.5)" : "rgba(26,26,26,0.5)";
 
     ctx.fillStyle = accentColor;
-    ctx.fillRect(80, 80, 6, 120);
+    ctx.fillRect(80, 80, 8, 160);
 
     ctx.fillStyle = textColor;
-    ctx.font = "italic 44px Georgia, serif";
+    ctx.font = "italic 56px Georgia, serif";
     const words = verseText.split(" ");
     const lines: string[] = [];
     let currentLine = "\u201C";
     for (const word of words) {
       const test = currentLine + word + " ";
-      if (ctx.measureText(test).width > w - 200) {
+      if (ctx.measureText(test).width > w - 220) {
         lines.push(currentLine.trim());
         currentLine = word + " ";
       } else {
@@ -81,20 +81,20 @@ export default function VerseActionBar({ verseText, reference, scriptureId, onCl
     }
     lines.push(currentLine.trim() + "\u201D");
 
-    let y = 200;
+    let y = 240;
     for (const line of lines) {
-      ctx.fillText(line, 110, y);
-      y += 60;
+      ctx.fillText(line, 120, y);
+      y += 76;
     }
 
     ctx.fillStyle = accentColor;
-    ctx.fillRect(110, y + 20, 60, 3);
-    ctx.font = "bold 20px sans-serif";
-    ctx.fillText(reference.toUpperCase(), 190, y + 28);
+    ctx.fillRect(120, y + 30, 80, 4);
+    ctx.font = "bold 28px sans-serif";
+    ctx.fillText(reference.toUpperCase(), 220, y + 40);
 
     ctx.fillStyle = mutedColor;
-    ctx.font = "bold 14px sans-serif";
-    ctx.fillText("FOUNDER'S BIBLE", 110, h - 80);
+    ctx.font = "bold 20px sans-serif";
+    ctx.fillText("FOUNDER'S BIBLE", 120, h - 80);
 
     canvas.toBlob(async (blob) => {
       if (!blob) return;
