@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bookmark, Loader2, ArrowRight, Search, ChevronDown, BookOpen, ChevronLeft, ChevronRight, Sparkles, Library } from "lucide-react";
+import { Bookmark, Loader2, ArrowRight, ChevronDown, BookOpen, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { themes, fetchScripturesByTheme, type Theme, type Scripture } from "@/data/scriptures";
-import { fetchBiblePassage, fetchBibleChapter, parseReference, type BiblePassage } from "@/lib/bibleApi";
-import { bibleBooks, getBooksByTestament, type BibleBook } from "@/lib/bibleBooks";
+import { fetchBibleChapter, type BiblePassage } from "@/lib/bibleApi";
 import { fetchThemeVerses, hydrateVerse, type ThemeVerse } from "@/lib/themeVersesApi";
 import { useFavorites } from "@/hooks/useFavorites";
 import { toast } from "sonner";
@@ -12,6 +11,33 @@ import VerseActionBar from "@/components/VerseActionBar";
 
 const positiveThemes = ["Leadership", "Courage", "Faith", "Patience", "Discipline", "Purpose", "Wisdom", "Perseverance", "Hope", "Love", "Humility", "Gratitude", "Trust", "Strength", "Peace", "Integrity"];
 const realThemes = ["Fear", "Money", "Negotiation", "Anxiety", "Failure", "Anger", "Jealousy", "Loneliness", "Doubt", "Greed", "Pride", "Suffering"];
+
+// Popular books including deuterocanonical
+const popularBooks = [
+  { name: "Genesis", chapters: 50 },
+  { name: "Exodus", chapters: 40 },
+  { name: "Psalms", chapters: 150 },
+  { name: "Proverbs", chapters: 31 },
+  { name: "Isaiah", chapters: 66 },
+  { name: "Matthew", chapters: 28 },
+  { name: "Mark", chapters: 16 },
+  { name: "Luke", chapters: 24 },
+  { name: "John", chapters: 21 },
+  { name: "Acts", chapters: 28 },
+  { name: "Romans", chapters: 16 },
+  { name: "1 Corinthians", chapters: 16 },
+  { name: "Philippians", chapters: 4 },
+  { name: "James", chapters: 5 },
+  { name: "Revelation", chapters: 22 },
+  // Deuterocanonical
+  { name: "Tobit", chapters: 14 },
+  { name: "Judith", chapters: 16 },
+  { name: "Wisdom of Solomon", chapters: 19 },
+  { name: "Sirach", chapters: 51 },
+  { name: "Baruch", chapters: 6 },
+  { name: "1 Maccabees", chapters: 16 },
+  { name: "2 Maccabees", chapters: 15 },
+];
 
 const SCRIPTURES_PER_PAGE = 5;
 
@@ -30,24 +56,14 @@ export default function LibraryPage() {
   const [loadingAi, setLoadingAi] = useState(false);
 
   // Main tab state
-  const [activeTab, setActiveTab] = useState<"themes" | "bible" | "browse">("themes");
+  const [activeTab, setActiveTab] = useState<"themes" | "books">("themes");
 
-  // Bible search state
-  const [bibleSearch, setBibleSearch] = useState("");
-  const [bibleResult, setBibleResult] = useState<BiblePassage | null>(null);
-  const [bibleLoading, setBibleLoading] = useState(false);
-  const [bibleError, setBibleError] = useState("");
-  const [currentBook, setCurrentBook] = useState("");
-  const [currentChapter, setCurrentChapter] = useState(1);
-  const [isKeywordSearch, setIsKeywordSearch] = useState(false);
-  const [keywordResults, setKeywordResults] = useState<{ verse: { text: string; verse: number; chapter: number; book_name: string }; reference: string }[]>([]);
-
-  // Bible browser state
-  const [browseTestament, setBrowseTestament] = useState<"OT" | "NT" | "DC">("OT");
-  const [browseBook, setBrowseBook] = useState<BibleBook | null>(null);
-  const [browseChapter, setBrowseChapter] = useState<number | null>(null);
-  const [browsePassage, setBrowsePassage] = useState<BiblePassage | null>(null);
-  const [browseLoading, setBrowseLoading] = useState(false);
+  // Book browser state
+  const [selectedBook, setSelectedBook] = useState<{ name: string; chapters: number } | null>(null);
+  const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
+  const [passage, setPassage] = useState<BiblePassage | null>(null);
+  const [bookLoading, setBookLoading] = useState(false);
+  const [bookError, setBookError] = useState("");
 
   // Verse selection
   const [selectedVerse, setSelectedVerse] = useState<{ text: string; reference: string; id?: string } | null>(null);
@@ -81,14 +97,12 @@ export default function LibraryPage() {
     }
   }, [selectedTheme, preferredVersion]);
 
-  // Load more AI verses for a theme (can be called multiple times)
+  // Load more AI verses for a theme
   const loadMoreAiVerses = useCallback(async () => {
     if (!selectedTheme || loadingAi) return;
     setLoadingAi(true);
     const verses = await fetchThemeVerses(selectedTheme);
-    // Hydrate each verse with actual Bible text
     const hydrated = await Promise.all(verses.map(v => hydrateVerse(v)));
-    // Filter out verses we already have
     const existingRefs = new Set([
       ...filteredScriptures.map(s => s.reference.toLowerCase()),
       ...aiVerses.map(v => v.reference.toLowerCase())
@@ -116,97 +130,33 @@ export default function LibraryPage() {
   const visibleScriptures = filteredScriptures.slice(0, visibleCount);
   const hasMore = visibleCount < filteredScriptures.length;
 
-  // Bible search handlers
-  const handleBibleSearch = async (ref?: string) => {
-    const query = ref || bibleSearch.trim();
-    if (!query) return;
-    setBibleLoading(true);
-    setBibleError("");
-    setBibleResult(null);
+  // Book chapter loading - always use "web" translation for reliability
+  const handleLoadChapter = async (book: { name: string; chapters: number }, chapter: number) => {
+    setBookLoading(true);
+    setBookError("");
+    setSelectedChapter(chapter);
     setSelectedBibleVerse(null);
-    setKeywordResults([]);
     
-    // Detect if this is a keyword search (no numbers = keyword)
-    const isKeyword = !/\d/.test(query);
-    setIsKeywordSearch(isKeyword);
+    // Use WEB translation for reliability (works with all books including deuterocanonical)
+    const result = await fetchBibleChapter(book.name, chapter);
     
-    if (isKeyword) {
-      // Keyword search - search across popular chapters
-      const searchBooks = ["Psalms", "Proverbs", "Matthew", "John", "Romans", "1 Corinthians", "Philippians", "James", "Genesis", "Isaiah"];
-      const results: { verse: { text: string; verse: number; chapter: number; book_name: string }; reference: string }[] = [];
-      const keyword = query.toLowerCase();
-      
-      for (const book of searchBooks) {
-        // Search first few chapters of each book
-        for (let ch = 1; ch <= 5; ch++) {
-          const passage = await fetchBibleChapter(book, ch);
-          if (passage?.verses) {
-            for (const v of passage.verses) {
-              if (v.text.toLowerCase().includes(keyword)) {
-                results.push({
-                  verse: { ...v, chapter: ch, book_name: book },
-                  reference: `${book} ${ch}:${v.verse}`
-                });
-                if (results.length >= 20) break;
-              }
-            }
-          }
-          if (results.length >= 20) break;
-        }
-        if (results.length >= 20) break;
-      }
-      
-      setKeywordResults(results);
-      if (results.length === 0) {
-        setBibleError(`No verses found containing "${query}". Try another word like "love", "hope", or "strength".`);
-      }
+    if (result && result.verses && result.verses.length > 0) {
+      setPassage(result);
     } else {
-      // Reference search
-      const result = await fetchBiblePassage(query);
-      if (result) {
-        setBibleResult(result);
-        const parsed = parseReference(result.reference);
-        if (parsed) { setCurrentBook(parsed.book); setCurrentChapter(parsed.chapter); }
-      } else {
-        setBibleError("Could not find that reference. Try something like \"John 3:16\" or \"Psalm 23\".");
-      }
+      setBookError(`Could not load ${book.name} ${chapter}. Please try again.`);
+      setPassage(null);
     }
-    setBibleLoading(false);
+    setBookLoading(false);
   };
 
   const navigateChapter = async (direction: -1 | 1) => {
-    if (!currentBook) return;
-    const nextChapter = currentChapter + direction;
-    if (nextChapter < 1) return;
-    setBibleLoading(true);
-    setBibleError("");
-    setSelectedBibleVerse(null);
-    const result = await fetchBibleChapter(currentBook, nextChapter);
-    if (result && result.verses.length > 0) {
-      setBibleResult(result);
-      setCurrentChapter(nextChapter);
-      setBibleSearch(`${currentBook} ${nextChapter}`);
-    } else {
-      toast.info(direction === 1 ? "No more chapters" : "Already at chapter 1");
+    if (!selectedBook || !selectedChapter) return;
+    const next = selectedChapter + direction;
+    if (next < 1 || next > selectedBook.chapters) {
+      toast.info(direction === 1 ? "End of book" : "Already at chapter 1");
+      return;
     }
-    setBibleLoading(false);
-  };
-
-  // Browse handlers
-  const handleBrowseChapter = async (book: BibleBook, chapter: number) => {
-    setBrowseLoading(true);
-    setBrowseChapter(chapter);
-    setSelectedBibleVerse(null);
-    const result = await fetchBibleChapter(book.name, chapter);
-    setBrowsePassage(result);
-    setBrowseLoading(false);
-  };
-
-  const navigateBrowseChapter = async (direction: -1 | 1) => {
-    if (!browseBook || !browseChapter) return;
-    const next = browseChapter + direction;
-    if (next < 1 || next > browseBook.chapters) return;
-    await handleBrowseChapter(browseBook, next);
+    await handleLoadChapter(selectedBook, next);
   };
 
   const handleVerseSelect = (s: Scripture) => {
@@ -256,9 +206,9 @@ export default function LibraryPage() {
     </div>
   );
 
-  const renderBibleVerses = (passage: BiblePassage, referencePrefix: string) => (
+  const renderBibleVerses = (passageData: BiblePassage, book: string, chapter: number) => (
     <div className="space-y-1">
-      {passage.verses.map((v) => {
+      {passageData.verses.map((v) => {
         const isSelected = selectedBibleVerse?.verse === v.verse;
         return (
           <div key={`${v.book_id}-${v.chapter}-${v.verse}`}>
@@ -275,7 +225,7 @@ export default function LibraryPage() {
               {isSelected && (
                 <VerseActionBar
                   verseText={v.text.trim()}
-                  reference={`${referencePrefix}:${v.verse}`}
+                  reference={`${book} ${chapter}:${v.verse}`}
                   onClose={() => setSelectedBibleVerse(null)}
                 />
               )}
@@ -316,7 +266,7 @@ export default function LibraryPage() {
           THE<br /><span className="italic text-primary">LIBRARY</span>
         </h1>
         <p className="text-[10px] font-body font-bold uppercase tracking-[0.3em] text-muted-foreground mt-3">
-          Themes · Search · Browse the entire Bible
+          Themes · Popular Books
         </p>
       </div>
 
@@ -324,8 +274,7 @@ export default function LibraryPage() {
       <div className="flex gap-0 mb-5 border-b-2 border-foreground">
         {[
           { key: "themes" as const, label: "Themes" },
-          { key: "bible" as const, label: "Search" },
-          { key: "browse" as const, label: "Full Bible" },
+          { key: "books" as const, label: "Popular Books" },
         ].map(({ key, label }) => (
           <button
             key={key}
@@ -424,8 +373,7 @@ export default function LibraryPage() {
                                 </>
                               ) : (
                                 <>
-                                  <Sparkles className="w-3.5 h-3.5" /> 
-                                  {hasMore ? `Show More (${filteredScriptures.length - visibleCount} remaining)` : "Discover More"}
+                                  <Sparkles className="w-3.5 h-3.5" /> Discover More
                                 </>
                               )}
                             </button>
@@ -478,8 +426,7 @@ export default function LibraryPage() {
                       </>
                     ) : (
                       <>
-                        <Sparkles className="w-4 h-4" /> 
-                        {hasMore ? `Show More (${filteredScriptures.length - visibleCount} remaining)` : "Discover More"}
+                        <Sparkles className="w-4 h-4" /> Discover More
                       </>
                     )}
                   </button>
@@ -495,179 +442,40 @@ export default function LibraryPage() {
         </div>
       )}
 
-      {/* ═══════════════ SEARCH TAB ═══════════════ */}
-      {activeTab === "bible" && (
-        <div>
-          <div className="flex gap-2 mb-6">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                value={bibleSearch}
-                onChange={(e) => setBibleSearch(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleBibleSearch()}
-                placeholder='Search "John 3:16" or words like "fear", "love", "hope"'
-                className="w-full pl-10 pr-4 py-3 bg-secondary text-foreground font-body text-sm border-2 border-transparent focus:border-primary outline-none placeholder:text-muted-foreground"
-              />
-            </div>
-            <button onClick={() => handleBibleSearch()} disabled={bibleLoading}
-              className="px-5 py-3 bg-foreground text-background font-body text-[11px] font-bold uppercase tracking-wider hover:bg-primary transition-all disabled:opacity-50">
-              {bibleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Go"}
-            </button>
-          </div>
-
-          {/* Quick picks */}
-          <div className="mb-6">
-            <p className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground mb-3">Popular References</p>
-            <div className="flex gap-2 flex-wrap">
-              {["John 3:16", "Psalm 23", "Romans 8:28", "Proverbs 3:5-6", "Jeremiah 29:11", "Philippians 4:13", "Isaiah 41:10", "Matthew 6:33", "Psalm 46:10", "Joshua 1:9"].map((ref) => (
-                <button key={ref} onClick={() => { setBibleSearch(ref); handleBibleSearch(ref); }}
-                  className="px-3 py-1.5 text-[10px] font-body font-bold uppercase tracking-wider border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all">
-                  {ref}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Keyword suggestions */}
-          <div className="mb-6">
-            <p className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground mb-3">Search by Word</p>
-            <div className="flex gap-2 flex-wrap">
-              {["fear", "love", "hope", "faith", "peace", "strength", "wisdom", "trust", "joy", "grace"].map((word) => (
-                <button key={word} onClick={() => { setBibleSearch(word); handleBibleSearch(word); }}
-                  className="px-3 py-1.5 text-[10px] font-body font-bold uppercase tracking-wider bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition-all">
-                  {word}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {bibleError && <div className="text-center py-8"><p className="text-sm font-body text-muted-foreground">{bibleError}</p></div>}
-
-          {/* Keyword search results */}
-          {isKeywordSearch && keywordResults.length > 0 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <div className="flex items-center gap-3 mb-4 border-b-2 border-foreground pb-2">
-                <Search className="w-4 h-4 text-primary" />
-                <h2 className="font-display text-lg font-bold text-foreground">Results for "{bibleSearch}"</h2>
-                <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground ml-auto">
-                  {keywordResults.length} verses
-                </span>
-              </div>
-              <div className="space-y-3">
-                {keywordResults.map((result, i) => (
-                  <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
-                    className="bg-card border-l-4 border-primary p-4">
-                    <p className="text-[10px] font-body font-bold uppercase tracking-wider text-primary mb-2">{result.reference}</p>
-                    <p className="text-sm font-body leading-relaxed text-foreground">
-                      {result.verse.text.trim()}
-                    </p>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {/* Reference search results */}
-          {!isKeywordSearch && bibleResult && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <div className="flex items-center gap-3 mb-4 border-b-2 border-foreground pb-2">
-                <BookOpen className="w-4 h-4 text-primary" />
-                <h2 className="font-display text-lg font-bold text-foreground">{bibleResult.reference}</h2>
-                <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground ml-auto">
-                  {bibleResult.translation_name || "WEB"}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between mb-4">
-                <button onClick={() => navigateChapter(-1)} disabled={bibleLoading || currentChapter <= 1}
-                  className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-body font-bold uppercase tracking-wider border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-30">
-                  <ChevronLeft className="w-3.5 h-3.5" /> Prev
-                </button>
-                <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground">Ch. {currentChapter}</span>
-                <button onClick={() => navigateChapter(1)} disabled={bibleLoading}
-                  className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-body font-bold uppercase tracking-wider border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-30">
-                  Next <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {renderBibleVerses(bibleResult, bibleResult.reference.split(":")[0])}
-
-              <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
-                <button onClick={() => navigateChapter(-1)} disabled={bibleLoading || currentChapter <= 1}
-                  className="flex items-center gap-1.5 px-4 py-2.5 text-[10px] font-body font-bold uppercase tracking-wider bg-foreground text-background hover:bg-primary transition-all disabled:opacity-30">
-                  <ChevronLeft className="w-3.5 h-3.5" /> Previous
-                </button>
-                <button onClick={() => navigateChapter(1)} disabled={bibleLoading}
-                  className="flex items-center gap-1.5 px-4 py-2.5 text-[10px] font-body font-bold uppercase tracking-wider bg-foreground text-background hover:bg-primary transition-all disabled:opacity-30">
-                  Next <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {!bibleResult && !bibleError && !bibleLoading && keywordResults.length === 0 && (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 bg-foreground flex items-center justify-center mx-auto mb-4">
-                <Search className="w-6 h-6 text-primary" strokeWidth={1.5} />
-              </div>
-              <p className="font-display text-xl font-black text-foreground tracking-tight">
-                SEARCH THE <span className="italic text-primary">BIBLE</span>
-              </p>
-              <p className="text-xs text-muted-foreground font-body mt-2 max-w-[260px] mx-auto">
-                Enter a reference like "John 3:16" or search keywords like "fear" or "love".
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ═══════════════ FULL BIBLE BROWSE TAB ═══════════════ */}
-      {activeTab === "browse" && (
-        <div className="flex flex-col md:flex-row md:gap-6 md:items-start">
-          {/* Book list / navigation */}
+      {/* ═══════════════ POPULAR BOOKS TAB ═══════════════ */}
+      {activeTab === "books" && (
+        <div className="flex flex-col md:flex-row md:gap-6 md:items-start pb-6">
+          {/* Book list */}
           <div className="md:w-64 md:shrink-0 md:sticky md:top-20">
-            {/* Testament tabs */}
-            <div className="flex gap-1 mb-4">
-              {([
-                { key: "OT" as const, label: "Old" },
-                { key: "NT" as const, label: "New" },
-                { key: "DC" as const, label: "Deutero" },
-              ]).map(({ key, label }) => (
-                <button key={key} onClick={() => { setBrowseTestament(key); setBrowseBook(null); setBrowseChapter(null); setBrowsePassage(null); }}
-                  className={`flex-1 py-2 text-[10px] font-body font-bold uppercase tracking-wider transition-all border-2 ${
-                    browseTestament === key ? "bg-foreground text-background border-foreground" : "bg-transparent text-foreground border-transparent hover:border-foreground/20"
-                  }`}>
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {/* Book list with inline chapter expansion */}
+            <p className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground mb-3 px-1">
+              Select a book to read
+            </p>
             <div className="max-h-[50vh] md:max-h-[70vh] overflow-y-auto border-t border-border">
-              {getBooksByTestament(browseTestament).map((book) => (
+              {popularBooks.map((book) => (
                 <div key={book.name}>
                   <button
                     onClick={() => { 
-                      if (browseBook?.name === book.name) {
-                        setBrowseBook(null); 
-                        setBrowseChapter(null); 
-                        setBrowsePassage(null);
+                      if (selectedBook?.name === book.name) {
+                        setSelectedBook(null); 
+                        setSelectedChapter(null); 
+                        setPassage(null);
+                        setBookError("");
                       } else {
-                        setBrowseBook(book); 
-                        setBrowseChapter(null); 
-                        setBrowsePassage(null);
+                        setSelectedBook(book); 
+                        setSelectedChapter(null); 
+                        setPassage(null);
+                        setBookError("");
                       }
                     }}
                     className={`w-full text-left px-4 py-3 text-sm font-body font-bold transition-all border-b border-border ${
-                      browseBook?.name === book.name ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"
+                      selectedBook?.name === book.name ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"
                     }`}>
                     <div className="flex items-center justify-between">
                       <span>{book.name}</span>
                       <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-body ${browseBook?.name === book.name ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{book.chapters} ch</span>
-                        <motion.div animate={{ rotate: browseBook?.name === book.name ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                          <ChevronDown className={`w-4 h-4 ${browseBook?.name === book.name ? "text-primary-foreground" : "text-muted-foreground"}`} />
+                        <span className={`text-[10px] font-body ${selectedBook?.name === book.name ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{book.chapters} ch</span>
+                        <motion.div animate={{ rotate: selectedBook?.name === book.name ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                          <ChevronDown className={`w-4 h-4 ${selectedBook?.name === book.name ? "text-primary-foreground" : "text-muted-foreground"}`} />
                         </motion.div>
                       </div>
                     </div>
@@ -675,7 +483,7 @@ export default function LibraryPage() {
                   
                   {/* Inline chapter grid */}
                   <AnimatePresence>
-                    {browseBook?.name === book.name && (
+                    {selectedBook?.name === book.name && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
@@ -686,11 +494,9 @@ export default function LibraryPage() {
                           <p className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground mb-2">Select Chapter</p>
                           <div className="grid grid-cols-6 sm:grid-cols-8 gap-1.5">
                             {Array.from({ length: book.chapters }, (_, i) => i + 1).map((ch) => (
-                              <button key={ch} onClick={() => handleBrowseChapter(book, ch)}
-                                className={`py-2 text-xs font-body font-bold border transition-all ${
-                                  browseChapter === ch 
-                                    ? "bg-primary text-primary-foreground border-primary" 
-                                    : "border-border text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary"
+                              <button key={ch} onClick={() => handleLoadChapter(book, ch)}
+                                className={`py-2 text-xs font-body font-bold transition-all ${
+                                  selectedChapter === ch ? "bg-primary text-primary-foreground" : "bg-background text-foreground hover:bg-primary/20 border border-border"
                                 }`}>
                                 {ch}
                               </button>
@@ -705,80 +511,69 @@ export default function LibraryPage() {
             </div>
           </div>
 
-          {/* Right: Reading pane */}
-          <div className="flex-1 mt-4 md:mt-0">
-            {browseBook && browseChapter && (
+          {/* Passage display */}
+          <div className="flex-1 md:bg-card md:border md:border-border md:p-6 mt-4 md:mt-0 min-h-[400px]">
+            {bookLoading ? (
+              <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+            ) : bookError ? (
+              <div className="text-center py-16">
+                <p className="text-sm font-body text-destructive">{bookError}</p>
+                <button onClick={() => selectedBook && selectedChapter && handleLoadChapter(selectedBook, selectedChapter)}
+                  className="mt-4 px-4 py-2 text-[10px] font-body font-bold uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90 transition-all">
+                  Try Again
+                </button>
+              </div>
+            ) : passage && selectedBook && selectedChapter ? (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <div className="flex items-center gap-3 mb-4">
-                  <button onClick={() => { setBrowseChapter(null); setBrowsePassage(null); }}
-                    className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-all flex items-center gap-1">
-                    <ChevronLeft className="w-3.5 h-3.5" /> Back
-                  </button>
-                  <h3 className="font-display text-xl font-bold text-foreground">{browseBook.name} {browseChapter}</h3>
+                <div className="flex items-center gap-3 mb-4 border-b-2 border-foreground pb-2">
+                  <BookOpen className="w-4 h-4 text-primary" />
+                  <h2 className="font-display text-lg font-bold text-foreground">{selectedBook.name} {selectedChapter}</h2>
+                  <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground ml-auto">
+                    {passage.translation_name || "WEB"}
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between mb-4">
-                  <button onClick={() => navigateBrowseChapter(-1)} disabled={browseLoading || browseChapter <= 1}
+                  <button onClick={() => navigateChapter(-1)} disabled={bookLoading || selectedChapter <= 1}
                     className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-body font-bold uppercase tracking-wider border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-30">
                     <ChevronLeft className="w-3.5 h-3.5" /> Prev
                   </button>
-                  <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground">Ch. {browseChapter} of {browseBook.chapters}</span>
-                  <button onClick={() => navigateBrowseChapter(1)} disabled={browseLoading || browseChapter >= browseBook.chapters}
+                  <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground">Ch. {selectedChapter}</span>
+                  <button onClick={() => navigateChapter(1)} disabled={bookLoading || selectedChapter >= selectedBook.chapters}
                     className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-body font-bold uppercase tracking-wider border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-30">
                     Next <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
-                {browseLoading ? (
-                  <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
-                ) : browsePassage ? (
-                  <>
-                    {renderBibleVerses(browsePassage, `${browseBook.name} ${browseChapter}`)}
-                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
-                      <button onClick={() => navigateBrowseChapter(-1)} disabled={browseLoading || browseChapter <= 1}
-                        className="flex items-center gap-1.5 px-4 py-2.5 text-[10px] font-body font-bold uppercase tracking-wider bg-foreground text-background hover:bg-primary transition-all disabled:opacity-30">
-                        <ChevronLeft className="w-3.5 h-3.5" /> Previous
-                      </button>
-                      <button onClick={() => navigateBrowseChapter(1)} disabled={browseLoading || browseChapter >= browseBook.chapters}
-                        className="flex items-center gap-1.5 px-4 py-2.5 text-[10px] font-body font-bold uppercase tracking-wider bg-foreground text-background hover:bg-primary transition-all disabled:opacity-30">
-                        Next <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-muted-foreground font-body text-center py-8">Could not load this chapter. The API may not support this book.</p>
-                )}
+                {renderBibleVerses(passage, selectedBook.name, selectedChapter)}
+
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+                  <button onClick={() => navigateChapter(-1)} disabled={bookLoading || selectedChapter <= 1}
+                    className="flex items-center gap-1.5 px-4 py-2.5 text-[10px] font-body font-bold uppercase tracking-wider bg-foreground text-background hover:bg-primary transition-all disabled:opacity-30">
+                    <ChevronLeft className="w-3.5 h-3.5" /> Previous
+                  </button>
+                  <button onClick={() => navigateChapter(1)} disabled={bookLoading || selectedChapter >= selectedBook.chapters}
+                    className="flex items-center gap-1.5 px-4 py-2.5 text-[10px] font-body font-bold uppercase tracking-wider bg-foreground text-background hover:bg-primary transition-all disabled:opacity-30">
+                    Next <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </motion.div>
-            )}
-
-            {browseBook && !browseChapter && (
-              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                <BookOpen className="w-16 h-16 mb-4 opacity-10" />
+            ) : (
+              <div className="text-center py-16">
+                <div className="w-16 h-16 bg-foreground flex items-center justify-center mx-auto mb-4">
+                  <BookOpen className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                </div>
                 <p className="font-display text-xl font-black text-foreground tracking-tight">
-                  {browseBook.name}
+                  READ THE <span className="italic text-primary">BIBLE</span>
                 </p>
-                <p className="text-xs text-muted-foreground font-body mt-2">
-                  Select a chapter from the dropdown to start reading.
-                </p>
-              </div>
-            )}
-
-            {!browseBook && (
-              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                <Library className="w-16 h-16 mb-4 opacity-10" />
-                <p className="font-display text-xl font-black text-foreground tracking-tight">
-                  BROWSE THE <span className="italic text-primary">BIBLE</span>
-                </p>
-                <p className="text-xs text-muted-foreground font-body mt-2 max-w-[260px] mx-auto text-center">
-                  Select a book from the list to start reading. Every book, every chapter, every verse.
+                <p className="text-xs text-muted-foreground font-body mt-2 max-w-[260px] mx-auto">
+                  Select a book and chapter to start reading. Includes popular books and deuterocanonical texts.
                 </p>
               </div>
             )}
           </div>
         </div>
       )}
-
-      <div className="h-8" />
     </div>
   );
 }
