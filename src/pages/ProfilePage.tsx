@@ -198,10 +198,21 @@ export default function ProfilePage() {
         You will receive a browser notification at this time daily (keep the app open in a tab).
       </p>
       <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-3">
+        <form onSubmit={e => e.preventDefault()} className="flex items-center gap-3">
           <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
-          <input type="time" value={notifTime} onChange={e => handleTimeChange(e.target.value)} className="bg-background text-foreground font-body text-sm font-semibold px-3 py-2 border-2 border-border focus:border-primary outline-none transition-colors" />
-        </div>
+          <input
+            type="time"
+            value={notifTime}
+            onChange={e => {
+              e.preventDefault();
+              if (e.target.value) handleTimeChange(e.target.value);
+            }}
+            onBlur={e => {
+              if (e.target.value && e.target.value !== notifTime) handleTimeChange(e.target.value);
+            }}
+            className="bg-background text-foreground font-body text-sm font-semibold px-3 py-2 border-2 border-border focus:border-primary outline-none transition-colors"
+          />
+        </form>
         <div className="flex gap-2 flex-wrap">
           {["06:00", "07:00", "08:00", "09:00", "12:00", "21:00"].map(t => (
             <button key={t} onClick={() => handleTimeChange(t)} className={`px-3 py-1.5 text-[10px] font-body font-bold uppercase tracking-wider border-2 transition-all ${notifTime === t ? "bg-foreground text-background border-foreground" : "bg-transparent text-muted-foreground border-border hover:border-foreground"}`}>
