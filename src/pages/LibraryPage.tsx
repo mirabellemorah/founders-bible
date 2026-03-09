@@ -281,7 +281,14 @@ export default function LibraryPage() {
         >
           <ChevronLeft className="w-3.5 h-3.5" /> Prev
         </motion.button>
-        {isTop ? renderChapterSelector() : (
+        {isTop ? (
+          <>
+            {renderChapterSelector()}
+            <span className="hidden md:inline text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground">
+              Chapter {selectedChapter} / {selectedBook.chapters}
+            </span>
+          </>
+        ) : (
           <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground">
             {selectedChapter} / {selectedBook.chapters}
           </span>
