@@ -9,23 +9,27 @@ import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 import VerseActionBar from "@/components/VerseActionBar";
 
-// Smooth spring-based transitions
-const smoothSpring = { type: "spring", stiffness: 300, damping: 30, mass: 0.8 };
-const gentleEase = { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] };
+// Smooth transitions
+const smoothSpring = { type: "spring" as const, stiffness: 300, damping: 30, mass: 0.8 };
+const gentleEase = { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const };
+const exitEase = { duration: 0.25, ease: [0.55, 0, 1, 0.45] as const };
 const fadeUp = {
   initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0, transition: gentleEase },
-  exit: { opacity: 0, y: -8, transition: { duration: 0.25, ease: [0.55, 0, 1, 0.45] } },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -8 },
+  transition: gentleEase,
 };
 const slideRight = {
   initial: { opacity: 0, x: 40 },
-  animate: { opacity: 1, x: 0, transition: smoothSpring },
-  exit: { opacity: 0, x: -30, transition: { duration: 0.25, ease: [0.55, 0, 1, 0.45] } },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -30 },
+  transition: smoothSpring,
 };
 const slideLeft = {
   initial: { opacity: 0, x: -40 },
-  animate: { opacity: 1, x: 0, transition: smoothSpring },
-  exit: { opacity: 0, x: 30, transition: { duration: 0.25, ease: [0.55, 0, 1, 0.45] } },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: 30 },
+  transition: smoothSpring,
 };
 
 const positiveThemes = ["Leadership", "Courage", "Faith", "Patience", "Discipline", "Purpose", "Wisdom", "Perseverance", "Hope", "Love", "Humility", "Gratitude", "Trust", "Strength", "Peace", "Integrity"];
