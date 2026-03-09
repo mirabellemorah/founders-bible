@@ -187,146 +187,239 @@ export default function LibraryPage() {
       </div>
 
       {activeTab === "themes" && (
-        <>
-          {/* Category tabs */}
-          <div className="flex gap-1 mb-5">
-            {[
-              { key: "all" as const, label: "All" },
-              { key: "positive" as const, label: "Virtues" },
-              { key: "real" as const, label: "Real Talk" },
-            ].map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => { setActiveCategory(key); setSelectedTheme(null); setSelectedVerse(null); }}
-                className={`px-4 py-2 text-[11px] font-body font-bold uppercase tracking-wider transition-all border-2 ${
-                  activeCategory === key
-                    ? "bg-foreground text-background border-foreground"
-                    : "bg-transparent text-foreground border-transparent hover:border-foreground/20"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* Theme list */}
-          <div className="space-y-0">
-            {displayThemes.map((theme, i) => (
-              <div key={theme}>
+        <div className="flex flex-col md:flex-row md:gap-8 md:items-start relative pb-6">
+          {/* Left Column: Categories and Themes */}
+          <div className="md:w-72 md:shrink-0 md:sticky md:top-20">
+            {/* Category tabs */}
+            <div className="flex gap-1 mb-5 flex-wrap">
+              {[
+                { key: "all" as const, label: "All" },
+                { key: "positive" as const, label: "Virtues" },
+                { key: "real" as const, label: "Real Talk" },
+              ].map(({ key, label }) => (
                 <button
-                  onClick={() => { setSelectedTheme(selectedTheme === theme ? null : theme); setSelectedVerse(null); }}
-                  className={`w-full flex items-center justify-between px-4 py-4 transition-all border-b ${
-                    selectedTheme === theme
-                      ? "bg-foreground text-background border-foreground sticky top-0 z-30"
-                      : "bg-transparent border-border hover:bg-secondary"
+                  key={key}
+                  onClick={() => { setActiveCategory(key); setSelectedTheme(null); setSelectedVerse(null); }}
+                  className={`px-4 py-2 text-[11px] font-body font-bold uppercase tracking-wider transition-all border-2 ${
+                    activeCategory === key
+                      ? "bg-foreground text-background border-foreground"
+                      : "bg-transparent text-foreground border-transparent hover:border-foreground/20"
                   }`}
                 >
-                  <div className="flex items-center gap-4">
-                    <span className={`font-display text-[10px] font-bold ${selectedTheme === theme ? "text-primary" : "text-muted-foreground"}`}>
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span className={`font-display text-base font-bold tracking-tight ${selectedTheme === theme ? "" : "text-foreground"}`}>
-                      {theme}
-                    </span>
-                  </div>
-                  <motion.div
-                    animate={{ rotate: selectedTheme === theme ? 90 : 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <ArrowRight
-                      className={`w-4 h-4 ${selectedTheme === theme ? "text-primary" : "text-muted-foreground"}`}
-                      strokeWidth={2}
-                    />
-                  </motion.div>
+                  {label}
                 </button>
+              ))}
+            </div>
 
-                <AnimatePresence>
-                  {selectedTheme === theme && (
+            {/* Theme list */}
+            <div className="space-y-0 border-t border-b md:border-b-0 border-border">
+              {displayThemes.map((theme, i) => (
+                <div key={theme}>
+                  <button
+                    onClick={() => { setSelectedTheme(selectedTheme === theme ? null : theme); setSelectedVerse(null); }}
+                    className={`w-full flex items-center justify-between px-4 py-4 md:py-3 transition-all border-b md:border-b-0 ${
+                      selectedTheme === theme
+                        ? "bg-foreground text-background border-foreground sticky top-0 z-30 md:static md:bg-primary md:text-primary-foreground md:border-transparent"
+                        : "bg-transparent border-border hover:bg-secondary md:border-transparent"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4 md:gap-3">
+                      <span className={`font-display text-[10px] font-bold ${selectedTheme === theme ? "text-primary md:text-primary-foreground/70" : "text-muted-foreground"}`}>
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span className={`font-display text-base md:text-sm font-bold tracking-tight ${selectedTheme === theme ? "" : "text-foreground"}`}>
+                        {theme}
+                      </span>
+                    </div>
                     <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="overflow-hidden bg-secondary/50"
+                      animate={{ rotate: selectedTheme === theme ? 90 : 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="md:hidden"
                     >
-                      {loadingTheme ? (
-                        <div className="flex justify-center py-8">
-                          <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                        </div>
-                      ) : filteredScriptures.length === 0 ? (
-                        <p className="text-sm text-muted-foreground font-body py-6 text-center">
-                          No scriptures for this theme yet.
-                        </p>
-                      ) : (
-                        <div className="py-3 px-4 space-y-3">
-                          {visibleScriptures.map((s, si) => (
-                            <div key={s.id}>
-                              <motion.div
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: si * 0.05 }}
-                                onClick={() => handleVerseSelect(s)}
-                                className={`bg-card border-l-4 border-primary p-4 cursor-pointer transition-all ${
-                                  selectedVerse?.id === s.id
-                                    ? "ring-2 ring-primary/30"
-                                    : "hover:bg-secondary"
-                                }`}
-                              >
-                                <div className="flex items-center gap-2 mb-2">
-                                  <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground">
-                                    {s.translation}
-                                  </span>
-                                </div>
-                                <p className={`font-display text-sm italic leading-relaxed text-foreground ${
-                                  selectedVerse?.id === s.id ? "underline decoration-dotted decoration-primary underline-offset-4" : ""
-                                }`}>
-                                  "{s.text}"
-                                </p>
-                                <div className="flex items-center justify-between mt-3">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-4 h-0.5 bg-primary" />
-                                    <p className="text-[10px] font-body font-bold uppercase tracking-widest text-primary">{s.reference}</p>
-                                  </div>
-                                  <Bookmark
-                                    className={`w-4 h-4 ${isFavorite(s.id) ? "text-primary fill-primary" : "text-muted-foreground"}`}
-                                    strokeWidth={2}
-                                  />
-                                </div>
-                                <p className="mt-2 text-xs font-body text-muted-foreground leading-relaxed">
-                                  {s.reflection}
-                                </p>
-                              </motion.div>
-
-                              <AnimatePresence>
-                                {selectedVerse?.id === s.id && (
-                                  <VerseActionBar
-                                    verseText={s.text}
-                                    reference={s.reference}
-                                    scriptureId={s.id}
-                                    onClose={() => setSelectedVerse(null)}
-                                  />
-                                )}
-                              </AnimatePresence>
-                            </div>
-                          ))}
-
-                          {hasMore && (
-                            <button
-                              onClick={() => setVisibleCount(prev => prev + SCRIPTURES_PER_PAGE)}
-                              className="w-full flex items-center justify-center gap-2 py-3 border border-border text-muted-foreground font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
-                            >
-                              <ChevronDown className="w-3.5 h-3.5" />
-                              Load More ({filteredScriptures.length - visibleCount} remaining)
-                            </button>
-                          )}
-                        </div>
-                      )}
+                      <ArrowRight
+                        className={`w-4 h-4 ${selectedTheme === theme ? "text-primary" : "text-muted-foreground"}`}
+                        strokeWidth={2}
+                      />
                     </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ))}
+                  </button>
+
+                  <AnimatePresence>
+                    {/* Mobile expansion */}
+                    {selectedTheme === theme && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden bg-secondary/50 md:hidden"
+                      >
+                        {loadingTheme ? (
+                          <div className="flex justify-center py-8">
+                            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                          </div>
+                        ) : filteredScriptures.length === 0 ? (
+                          <p className="text-sm text-muted-foreground font-body py-6 text-center">
+                            No scriptures for this theme yet.
+                          </p>
+                        ) : (
+                          <div className="py-3 px-4 space-y-3">
+                            {visibleScriptures.map((s, si) => (
+                              <div key={s.id}>
+                                <motion.div
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: si * 0.05 }}
+                                  onClick={() => handleVerseSelect(s)}
+                                  className={`bg-card border-l-4 border-primary p-4 cursor-pointer transition-all ${
+                                    selectedVerse?.id === s.id
+                                      ? "ring-2 ring-primary/30"
+                                      : "hover:bg-secondary"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground">
+                                      {s.translation}
+                                    </span>
+                                  </div>
+                                  <p className={`font-display text-sm italic leading-relaxed text-foreground ${
+                                    selectedVerse?.id === s.id ? "underline decoration-dotted decoration-primary underline-offset-4" : ""
+                                  }`}>
+                                    "{s.text}"
+                                  </p>
+                                  <div className="flex items-center justify-between mt-3">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-4 h-0.5 bg-primary" />
+                                      <p className="text-[10px] font-body font-bold uppercase tracking-widest text-primary">{s.reference}</p>
+                                    </div>
+                                    <Bookmark
+                                      className={`w-4 h-4 ${isFavorite(s.id) ? "text-primary fill-primary" : "text-muted-foreground"}`}
+                                      strokeWidth={2}
+                                    />
+                                  </div>
+                                  <p className="mt-2 text-xs font-body text-muted-foreground leading-relaxed">
+                                    {s.reflection}
+                                  </p>
+                                </motion.div>
+
+                                <AnimatePresence>
+                                  {selectedVerse?.id === s.id && (
+                                    <VerseActionBar
+                                      verseText={s.text}
+                                      reference={s.reference}
+                                      scriptureId={s.id}
+                                      onClose={() => setSelectedVerse(null)}
+                                    />
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            ))}
+
+                            {hasMore && (
+                              <button
+                                onClick={() => setVisibleCount(prev => prev + SCRIPTURES_PER_PAGE)}
+                                className="w-full flex items-center justify-center gap-2 py-3 border border-border text-muted-foreground font-body text-[10px] font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all"
+                              >
+                                <ChevronDown className="w-3.5 h-3.5" />
+                                Load More ({filteredScriptures.length - visibleCount} remaining)
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </div>
           </div>
-        </>
+
+          {/* Desktop right column: Scriptures */}
+          <div className="hidden md:block flex-1 bg-card border border-border p-8 min-h-[600px]">
+            {selectedTheme ? (
+              loadingTheme ? (
+                <div className="flex justify-center py-32">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : filteredScriptures.length === 0 ? (
+                <p className="text-muted-foreground font-body py-32 text-center">
+                  No scriptures for this theme yet.
+                </p>
+              ) : (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <h3 className="font-display text-3xl font-black mb-6 text-foreground border-b border-border pb-4">{selectedTheme}</h3>
+                  <div className="space-y-6">
+                    {visibleScriptures.map((s, si) => (
+                      <div key={s.id}>
+                        <motion.div
+                          initial={{ opacity: 0, x: 10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: si * 0.05 }}
+                          onClick={() => handleVerseSelect(s)}
+                          className={`bg-background border-l-4 border-primary p-6 cursor-pointer transition-all ${
+                            selectedVerse?.id === s.id
+                              ? "ring-2 ring-primary/30 shadow-md"
+                              : "hover:shadow-sm"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground">
+                              {s.translation}
+                            </span>
+                          </div>
+                          <p className={`font-display text-lg italic leading-relaxed text-foreground ${
+                            selectedVerse?.id === s.id ? "underline decoration-dotted decoration-primary underline-offset-4" : ""
+                          }`}>
+                            "{s.text}"
+                          </p>
+                          <div className="flex items-center justify-between mt-5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-0.5 bg-primary" />
+                              <p className="text-xs font-body font-bold uppercase tracking-widest text-primary">{s.reference}</p>
+                            </div>
+                            <Bookmark
+                              className={`w-4 h-4 ${isFavorite(s.id) ? "text-primary fill-primary" : "text-muted-foreground"}`}
+                              strokeWidth={2}
+                            />
+                          </div>
+                          <p className="mt-4 text-sm font-body text-muted-foreground leading-relaxed max-w-2xl">
+                            {s.reflection}
+                          </p>
+                        </motion.div>
+
+                        <AnimatePresence>
+                          {selectedVerse?.id === s.id && (
+                            <div className="mt-2">
+                              <VerseActionBar
+                                verseText={s.text}
+                                reference={s.reference}
+                                scriptureId={s.id}
+                                onClose={() => setSelectedVerse(null)}
+                              />
+                            </div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    ))}
+
+                    {hasMore && (
+                      <button
+                        onClick={() => setVisibleCount(prev => prev + SCRIPTURES_PER_PAGE)}
+                        className="w-full flex items-center justify-center gap-2 py-4 border border-border text-muted-foreground font-body text-xs font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all mt-6"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                        Load More ({filteredScriptures.length - visibleCount} remaining)
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              )
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground pt-40">
+                <BookOpen className="w-16 h-16 mb-4 opacity-10" />
+                <p className="font-body text-sm uppercase tracking-widest font-bold">Select a theme to explore</p>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {activeTab === "bible" && (

@@ -68,10 +68,10 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen max-h-screen">
+    <div className="flex flex-col h-full absolute inset-0">
       {/* Header */}
-      <div className="px-5 pt-safe">
-        <div className="flex items-center justify-between pt-3 pb-2 border-b-2 border-foreground">
+      <div className="px-5 pt-safe md:pt-6 shrink-0">
+        <div className="flex md:hidden items-center justify-between pt-3 pb-2 border-b-2 border-foreground">
           <p className="font-display text-xs font-black uppercase tracking-[0.3em] text-foreground">
             Founder's Bible
           </p>
@@ -79,7 +79,7 @@ export default function ChatPage() {
             Chat
           </p>
         </div>
-        <div className="pt-4 pb-3">
+        <div className="pt-4 pb-3 flex flex-col items-center">
           <h1 className="font-display text-3xl font-black text-foreground leading-[0.9] tracking-tight">
             ASK <span className="italic text-primary">&</span> REFLECT
           </h1>
@@ -90,100 +90,109 @@ export default function ChatPage() {
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 pb-4">
-        {messages.length === 0 &&
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <p className="text-[10px] font-body font-bold text-muted-foreground uppercase tracking-[0.2em]">
-                Try saying
-              </p>
-            </div>
-            <div className="space-y-1">
-              {prompts.map((p) =>
-            <button
-              key={p}
-              onClick={() => send(p)}
-              className="w-full text-left px-4 py-3.5 border-b border-border text-sm font-body text-foreground hover:bg-foreground hover:text-background transition-all">
-              
-                  "{p}"
-                </button>
-            )}
-            </div>
-          </motion.div>
-        }
-
-        <AnimatePresence>
-          {messages.map((msg) =>
-          <motion.div
-            key={msg.id}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`mt-3 ${msg.role === "user" ? "flex justify-end" : ""}`}>
-            
-              <div
-              className={`max-w-[85%] px-4 py-3 text-sm font-body leading-relaxed ${
-              msg.role === "user" ?
-              "bg-foreground text-background" :
-              "bg-card border-l-4 border-primary text-foreground"}`
-              }>
-              
-                {msg.role === "assistant" ?
-              <div className="whitespace-pre-wrap">
-                    {msg.content.split(/(\*\*.*?\*\*|_".*?"_)/g).map((part, i) => {
-                  if (part.startsWith("**") && part.endsWith("**")) {
-                    return <strong key={i} className="text-primary font-bold">{part.slice(2, -2)}</strong>;
-                  }
-                  if (part.startsWith('_"') && part.endsWith('"_')) {
-                    return <em key={i} className="block my-2 font-display text-base leading-relaxed">{part.slice(1, -1)}</em>;
-                  }
-                  return <span key={i}>{part}</span>;
-                })}
-                  </div> :
-
-              msg.content
-              }
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 pb-4 flex flex-col items-center">
+        <div className="w-full max-w-3xl flex flex-col flex-1">
+          {messages.length === 0 &&
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 md:mt-12">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <p className="text-[10px] font-body font-bold text-muted-foreground uppercase tracking-[0.2em]">
+                  Try saying
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {prompts.map((p) =>
+              <button
+                key={p}
+                onClick={() => send(p)}
+                className="w-full text-left px-4 py-4 border border-border bg-card text-sm font-body text-foreground hover:border-primary hover:text-primary transition-all">
+                
+                    "{p}"
+                  </button>
+              )}
               </div>
             </motion.div>
-          )}
-        </AnimatePresence>
+          }
 
-        {isLoading && messages[messages.length - 1]?.role !== "assistant" &&
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3">
-            <div className="inline-flex gap-1.5 bg-card border-l-4 border-primary px-4 py-3">
-              {[0, 1, 2].map((i) =>
+          <AnimatePresence>
+            {messages.map((msg) =>
             <motion.div
-              key={i}
-              className="w-1.5 h-1.5 bg-primary"
-              animate={{ opacity: [0.3, 1, 0.3] }}
-              transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }} />
+              key={msg.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`mt-4 md:mt-6 ${msg.role === "user" ? "flex justify-end" : ""}`}>
+              
+                <div
+                className={`max-w-[85%] px-5 py-4 text-sm md:text-base font-body leading-relaxed ${
+                msg.role === "user" ?
+                "bg-foreground text-background rounded-2xl rounded-tr-sm" :
+                "bg-transparent text-foreground"}`
+                }>
+                
+                  {msg.role === "assistant" ?
+                <div className="whitespace-pre-wrap flex gap-4">
+                      <div className="w-6 h-6 shrink-0 rounded-full bg-primary flex items-center justify-center mt-1">
+                        <Sparkles className="w-3 h-3 text-primary-foreground" />
+                      </div>
+                      <div>
+                        {msg.content.split(/(\*\*.*?\*\*|_".*?"_)/g).map((part, i) => {
+                          if (part.startsWith("**") && part.endsWith("**")) {
+                            return <strong key={i} className="text-primary font-bold">{part.slice(2, -2)}</strong>;
+                          }
+                          if (part.startsWith('_"') && part.endsWith('"_')) {
+                            return <em key={i} className="block my-4 font-display text-lg md:text-xl leading-relaxed border-l-4 border-primary pl-4 py-1">"{part.slice(2, -2)}"</em>;
+                          }
+                          return <span key={i}>{part}</span>;
+                        })}
+                      </div>
+                    </div> :
 
+                msg.content
+                }
+                </div>
+              </motion.div>
             )}
-            </div>
-          </motion.div>
-        }
+          </AnimatePresence>
+
+          {isLoading && messages[messages.length - 1]?.role !== "assistant" &&
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4 md:mt-6 flex gap-4">
+              <div className="w-6 h-6 shrink-0 rounded-full bg-primary/20 flex items-center justify-center mt-1">
+                <Sparkles className="w-3 h-3 text-primary" />
+              </div>
+              <div className="inline-flex gap-1.5 py-2">
+                {[0, 1, 2].map((i) =>
+              <motion.div
+                key={i}
+                className="w-1.5 h-1.5 rounded-full bg-primary"
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }} />
+              )}
+              </div>
+            </motion.div>
+          }
+        </div>
       </div>
 
       {/* Input */}
-      <div className="px-5 pb-24 pt-2 bg-background border-t-2 border-foreground">
-        <div className="flex items-center gap-2">
+      <div className="px-5 pb-24 md:pb-8 pt-4 bg-background border-t-2 border-border md:border-none flex justify-center shrink-0">
+        <div className="w-full max-w-3xl flex items-center gap-2 relative">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send(input)}
-            placeholder="How are you feeling today?"
-            className="flex-1 bg-card border-2 border-foreground/10 px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
+            placeholder="Share your struggle..."
+            className="flex-1 bg-card border-2 border-border px-6 py-4 rounded-full text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors shadow-sm"
             disabled={isLoading} />
           
           <button
             onClick={() => send(input)}
             disabled={!input.trim() || isLoading}
-            className="w-12 h-12 bg-foreground flex items-center justify-center disabled:opacity-40 transition-opacity hover:bg-primary">
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-foreground flex items-center justify-center disabled:opacity-40 transition-opacity hover:bg-primary">
             
-            <Send className="w-4 h-4 text-background" strokeWidth={2} />
+            <Send className="w-4 h-4 text-background -ml-0.5" strokeWidth={2} />
           </button>
         </div>
       </div>
-    </div>);
-
+    </div>
+  );
 }
