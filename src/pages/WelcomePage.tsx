@@ -6,14 +6,14 @@ export default function WelcomePage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col bg-ink relative overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-black relative overflow-hidden">
       {/* Giant decorative background text */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
         <motion.p
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 0.03, scale: 1 }}
           transition={{ duration: 1.5 }}
-          className="font-display text-[280px] font-black text-cream leading-none whitespace-nowrap"
+          className="font-display text-[280px] font-black text-white leading-none whitespace-nowrap"
         >
           FAITH
         </motion.p>
@@ -26,11 +26,11 @@ export default function WelcomePage() {
         transition={{ delay: 0.2 }}
         className="px-6 pt-safe"
       >
-        <div className="flex items-center justify-between pt-4 pb-3 border-b border-cream/10">
-          <p className="font-display text-[10px] font-black uppercase tracking-[0.3em] text-cream/60">
+        <div className="flex items-center justify-between pt-4 pb-3 border-b border-white/10">
+          <p className="font-display text-[10px] font-black uppercase tracking-[0.3em] text-white/60">
             Founder's Bible
           </p>
-          <p className="font-body text-[9px] uppercase tracking-widest text-cream/30">
+          <p className="font-body text-[9px] uppercase tracking-widest text-white/30">
             Vol. I
           </p>
         </div>
@@ -53,7 +53,7 @@ export default function WelcomePage() {
             01
           </motion.p>
 
-          <h1 className="font-display text-6xl font-black text-cream leading-[0.9] tracking-tight">
+          <h1 className="font-display text-6xl font-black text-white leading-[0.9] tracking-tight">
             BUILD
             <br />
             <span className="italic font-normal text-primary">with</span>
@@ -63,7 +63,7 @@ export default function WelcomePage() {
 
           <div className="mt-6 flex items-start gap-4">
             <div className="w-12 h-0.5 bg-primary mt-3 shrink-0" />
-            <p className="text-cream/50 font-body text-sm leading-relaxed max-w-[240px]">
+            <p className="text-white/50 font-body text-sm leading-relaxed max-w-[240px]">
               Biblical wisdom for builders, leaders, and dreamers who refuse to build without meaning.
             </p>
           </div>
@@ -85,7 +85,7 @@ export default function WelcomePage() {
               className={`px-4 py-2 text-xs font-body font-bold uppercase tracking-wider border ${
                 i === 0
                   ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-transparent text-cream/70 border-cream/20"
+                  : "bg-transparent text-white/70 border-white/20"
               }`}
             >
               {f}
@@ -111,16 +111,16 @@ export default function WelcomePage() {
           Begin Your Journey
           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
         </button>
-        <p className="mt-3 text-center text-[10px] text-cream/30 font-body uppercase tracking-widest">
+        <p className="mt-3 text-center text-[10px] text-white/30 font-body uppercase tracking-widest">
           Free · No account required
         </p>
       </motion.div>
 
       {/* Scrolling marquee at bottom */}
-      <div className="overflow-hidden border-t border-cream/10 py-2">
+      <div className="overflow-hidden border-t border-white/10 py-2">
         <div className="animate-marquee flex whitespace-nowrap">
           {Array(4).fill("SCRIPTURE · WISDOM · COURAGE · FAITH · PURPOSE · ").map((t, i) => (
-            <span key={i} className="font-body text-[10px] font-bold uppercase tracking-[0.4em] text-cream/10 mx-4">
+            <span key={i} className="font-body text-[10px] font-bold uppercase tracking-[0.4em] text-white/10 mx-4">
               {t}
             </span>
           ))}
