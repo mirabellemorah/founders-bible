@@ -36,21 +36,21 @@ export default function LibraryPage() {
   const [selectedVerse, setSelectedVerse] = useState<{ text: string; reference: string; id?: string } | null>(null);
   const [selectedBibleVerse, setSelectedBibleVerse] = useState<{ text: string; verse: number } | null>(null);
 
+  const preferredVersion = (localStorage.getItem("fb-bible-version") || "kjv").toUpperCase();
+
   useEffect(() => {
     if (selectedTheme) {
       setLoadingTheme(true);
       setVisibleCount(SCRIPTURES_PER_PAGE);
       fetchScripturesByTheme(selectedTheme).then((s) => {
-        const preferredVersion = (localStorage.getItem("fb-bible-version") || "web").toUpperCase();
+        // Deduplicate by reference, preferring the user's chosen translation
         const grouped = new Map<string, Scripture>();
         s.forEach(scripture => {
           const key = scripture.reference;
           if (!grouped.has(key)) {
             grouped.set(key, scripture);
-          } else {
-            if (scripture.translation === preferredVersion) {
-              grouped.set(key, scripture);
-            }
+          } else if (scripture.translation === preferredVersion) {
+            grouped.set(key, scripture);
           }
         });
         setFilteredScriptures(Array.from(grouped.values()));
@@ -59,7 +59,7 @@ export default function LibraryPage() {
     } else {
       setFilteredScriptures([]);
     }
-  }, [selectedTheme]);
+  }, [selectedTheme, preferredVersion]);
 
   // Read user's theme preferences from localStorage
   const userThemes = (() => {

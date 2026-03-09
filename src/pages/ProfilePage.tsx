@@ -63,10 +63,9 @@ export default function ProfilePage() {
 
   // Bible version
   const bibleVersions = [
-    { id: "web", label: "WEB (World English Bible)" },
     { id: "kjv", label: "KJV (King James Version)" },
+    { id: "web", label: "WEB (World English Bible)" },
     { id: "bbe", label: "BBE (Bible in Basic English)" },
-    { id: "almeida", label: "ALMEIDA (João Ferreira de Almeida)" }
   ];
   const [showBibleVersion, setShowBibleVersion] = useState(false);
   const [bibleVersion, setBibleVersion] = useState(() => localStorage.getItem("fb-bible-version") || "web");
@@ -265,7 +264,7 @@ export default function ProfilePage() {
     },
     {
       icon: BookOpen,
-      label: `Bible Version: ${bibleVersions.find(v => v.id === bibleVersion)?.id.toUpperCase() || "WEB"}`,
+      label: `Bible Version: ${bibleVersions.find(v => v.id === bibleVersion)?.id.toUpperCase() || "KJV"}`,
       action: () => setShowBibleVersion(prev => !prev),
       panel: { show: showBibleVersion, content: bibleVersionPanel },
     },
@@ -274,6 +273,11 @@ export default function ProfilePage() {
       label: `Color: ${colorModes.find(c => c.id === colorMode)!.label}`,
       action: () => setShowColors(prev => !prev),
       panel: { show: showColors, content: colorPanel },
+    },
+    {
+      icon: darkMode ? Moon : Sun,
+      label: darkMode ? "Dark Mode" : "Light Mode",
+      action: toggleDarkMode,
     },
     {
       icon: Palette,
@@ -286,11 +290,6 @@ export default function ProfilePage() {
       label: notificationsEnabled ? `Notifications · ${notifTime}` : "Notifications Off",
       action: toggleNotifications,
       panel: notificationsEnabled ? { show: showTimePicker, content: timePanel } : undefined,
-    },
-    {
-      icon: darkMode ? Moon : Sun,
-      label: darkMode ? "Dark Mode" : "Light Mode",
-      action: toggleDarkMode,
     },
     {
       icon: Info,
