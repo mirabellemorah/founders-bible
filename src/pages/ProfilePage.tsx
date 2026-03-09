@@ -63,10 +63,9 @@ export default function ProfilePage() {
 
   // Bible version
   const bibleVersions = [
-    { id: "web", label: "WEB (World English Bible)" },
     { id: "kjv", label: "KJV (King James Version)" },
+    { id: "web", label: "WEB (World English Bible)" },
     { id: "bbe", label: "BBE (Bible in Basic English)" },
-    { id: "almeida", label: "ALMEIDA (João Ferreira de Almeida)" }
   ];
   const [showBibleVersion, setShowBibleVersion] = useState(false);
   const [bibleVersion, setBibleVersion] = useState(() => localStorage.getItem("fb-bible-version") || "web");
