@@ -800,7 +800,7 @@ export default function LibraryPage() {
                     <motion.div
                       initial={{ scale: 0.9, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+                      transition={{ duration: 0.4, ease: "easeOut" as const }}
                       className="w-16 h-16 bg-foreground flex items-center justify-center mx-auto mb-4"
                     >
                       <BookOpen className="w-6 h-6 text-primary" strokeWidth={1.5} />
