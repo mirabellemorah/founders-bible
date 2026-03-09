@@ -1,6 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { LocalNotifications } from "@capacitor/local-notifications";
+import { Device } from "@capacitor/device";
 
 /**
  * Initialize push notifications (native mobile)
@@ -19,10 +20,24 @@ export async function initializePushNotifications() {
     }
 
     // Handle registration success
-    PushNotifications.addListener("registration", (token) => {
+    PushNotifications.addListener("registration", async (token) => {
       console.log("Push registration success, token:", token.value);
-      // Store token if you need to send it to your backend
       localStorage.setItem("fb-push-token", token.value);
+      
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const deviceId = await Device.getId().then(info => info.identifier);
+        const { data: session } = await supabase.auth.getSession();
+        
+        await supabase.from("push_tokens").upsert({
+          device_id: deviceId,
+          token: token.value,
+          platform: Capacitor.getPlatform(),
+          user_id: session?.session?.user?.id || null,
+        }, { onConflict: "device_id" });
+      } catch (err) {
+        console.error("Failed to save push token to DB:", err);
+      }
     });
 
     // Handle registration errors
