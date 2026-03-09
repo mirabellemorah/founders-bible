@@ -26,7 +26,7 @@ export async function initializePushNotifications() {
       
       try {
         const { supabase } = await import("@/integrations/supabase/client");
-        const deviceId = await Capacitor.getDeviceId().then(info => info.identifier);
+        const deviceId = await Device.getId().then(info => info.identifier);
         const { data: session } = await supabase.auth.getSession();
         
         await supabase.from("push_tokens").upsert({
