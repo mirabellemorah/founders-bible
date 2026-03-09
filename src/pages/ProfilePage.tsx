@@ -305,8 +305,8 @@ export default function ProfilePage() {
     {
       icon: notificationsEnabled ? Bell : BellOff,
       label: notificationsEnabled ? `Notifications · ${notifTime}` : "Notifications Off",
-      action: toggleNotifications,
-      panel: notificationsEnabled ? { show: showTimePicker, content: timePanel } : undefined,
+      action: () => setShowTimePicker(prev => !prev),
+      panel: { show: showTimePicker, content: timePanel },
     },
     {
       icon: Download,
