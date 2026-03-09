@@ -444,133 +444,238 @@ export default function LibraryPage() {
 
       {/* ═══════════════ POPULAR BOOKS TAB ═══════════════ */}
       {activeTab === "books" && (
-        <div className="flex flex-col md:flex-row md:gap-6 md:items-start pb-6">
-          {/* Book list */}
-          <div className="md:w-64 md:shrink-0 md:sticky md:top-20">
-            <p className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground mb-3 px-1">
-              Select a book to read
-            </p>
-            <div className="max-h-[50vh] md:max-h-[70vh] overflow-y-auto border-t border-border">
-              {popularBooks.map((book) => (
-                <div key={book.name}>
-                  <button
-                    onClick={() => { 
-                      if (selectedBook?.name === book.name) {
-                        setSelectedBook(null); 
-                        setSelectedChapter(null); 
-                        setPassage(null);
-                        setBookError("");
-                      } else {
-                        setSelectedBook(book); 
-                        setSelectedChapter(null); 
-                        setPassage(null);
-                        setBookError("");
-                      }
-                    }}
-                    className={`w-full text-left px-4 py-3 text-sm font-body font-bold transition-all border-b border-border ${
-                      selectedBook?.name === book.name ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"
-                    }`}>
-                    <div className="flex items-center justify-between">
-                      <span>{book.name}</span>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-body ${selectedBook?.name === book.name ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{book.chapters} ch</span>
-                        <motion.div animate={{ rotate: selectedBook?.name === book.name ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                          <ChevronDown className={`w-4 h-4 ${selectedBook?.name === book.name ? "text-primary-foreground" : "text-muted-foreground"}`} />
-                        </motion.div>
-                      </div>
-                    </div>
+        <div className="pb-6">
+          {/* ── MOBILE: Step-based navigation ── */}
+          <div className="md:hidden">
+            <AnimatePresence mode="wait">
+              {/* STEP 3: Reading view */}
+              {passage && selectedBook && selectedChapter && !bookLoading ? (
+                <motion.div key="reading" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                  <button onClick={() => { setPassage(null); setSelectedChapter(null); setBookError(""); }}
+                    className="flex items-center gap-2 mb-4 text-[11px] font-body font-bold uppercase tracking-wider text-primary">
+                    <ChevronLeft className="w-4 h-4" /> {selectedBook.name}
                   </button>
-                  
-                  {/* Inline chapter grid */}
-                  <AnimatePresence>
-                    {selectedBook?.name === book.name && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden bg-secondary/50 border-b border-border"
-                      >
-                        <div className="p-3">
-                          <p className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground mb-2">Select Chapter</p>
-                          <div className="grid grid-cols-6 sm:grid-cols-8 gap-1.5">
-                            {Array.from({ length: book.chapters }, (_, i) => i + 1).map((ch) => (
-                              <button key={ch} onClick={() => handleLoadChapter(book, ch)}
-                                className={`py-2 text-xs font-body font-bold transition-all ${
-                                  selectedChapter === ch ? "bg-primary text-primary-foreground" : "bg-background text-foreground hover:bg-primary/20 border border-border"
-                                }`}>
-                                {ch}
-                              </button>
-                            ))}
-                          </div>
+
+                  <div className="flex items-center gap-3 mb-4 border-b-2 border-foreground pb-2">
+                    <BookOpen className="w-4 h-4 text-primary" />
+                    <h2 className="font-display text-lg font-bold text-foreground">{selectedBook.name} {selectedChapter}</h2>
+                    <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground ml-auto">
+                      {passage.translation_name || "WEB"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between mb-4">
+                    <button onClick={() => navigateChapter(-1)} disabled={bookLoading || selectedChapter <= 1}
+                      className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-body font-bold uppercase tracking-wider border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-30">
+                      <ChevronLeft className="w-3.5 h-3.5" /> Prev
+                    </button>
+                    <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground">Ch. {selectedChapter}</span>
+                    <button onClick={() => navigateChapter(1)} disabled={bookLoading || selectedChapter >= selectedBook.chapters}
+                      className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-body font-bold uppercase tracking-wider border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-30">
+                      Next <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {renderBibleVerses(passage, selectedBook.name, selectedChapter)}
+
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+                    <button onClick={() => navigateChapter(-1)} disabled={bookLoading || selectedChapter <= 1}
+                      className="flex items-center gap-1.5 px-4 py-2.5 text-[10px] font-body font-bold uppercase tracking-wider bg-foreground text-background hover:bg-primary transition-all disabled:opacity-30">
+                      <ChevronLeft className="w-3.5 h-3.5" /> Previous
+                    </button>
+                    <button onClick={() => navigateChapter(1)} disabled={bookLoading || selectedChapter >= selectedBook.chapters}
+                      className="flex items-center gap-1.5 px-4 py-2.5 text-[10px] font-body font-bold uppercase tracking-wider bg-foreground text-background hover:bg-primary transition-all disabled:opacity-30">
+                      Next <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </motion.div>
+
+              ) : bookLoading ? (
+                <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  {selectedBook && (
+                    <button onClick={() => { setBookLoading(false); setSelectedChapter(null); setBookError(""); }}
+                      className="flex items-center gap-2 mb-4 text-[11px] font-body font-bold uppercase tracking-wider text-primary">
+                      <ChevronLeft className="w-4 h-4" /> {selectedBook.name}
+                    </button>
+                  )}
+                  <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+                </motion.div>
+
+              ) : bookError ? (
+                <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <button onClick={() => { setBookError(""); setSelectedChapter(null); }}
+                    className="flex items-center gap-2 mb-4 text-[11px] font-body font-bold uppercase tracking-wider text-primary">
+                    <ChevronLeft className="w-4 h-4" /> Back
+                  </button>
+                  <div className="text-center py-16">
+                    <p className="text-sm font-body text-destructive">{bookError}</p>
+                    <button onClick={() => selectedBook && selectedChapter && handleLoadChapter(selectedBook, selectedChapter)}
+                      className="mt-4 px-4 py-2 text-[10px] font-body font-bold uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90 transition-all">
+                      Try Again
+                    </button>
+                  </div>
+                </motion.div>
+
+              ) : selectedBook ? (
+                /* STEP 2: Chapter grid */
+                <motion.div key="chapters" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                  <button onClick={() => { setSelectedBook(null); setSelectedChapter(null); setPassage(null); setBookError(""); }}
+                    className="flex items-center gap-2 mb-4 text-[11px] font-body font-bold uppercase tracking-wider text-primary">
+                    <ChevronLeft className="w-4 h-4" /> All Books
+                  </button>
+                  <h2 className="font-display text-2xl font-black text-foreground mb-1">{selectedBook.name}</h2>
+                  <p className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground mb-5">
+                    {selectedBook.chapters} chapters · Select one to read
+                  </p>
+                  <div className="grid grid-cols-5 gap-2">
+                    {Array.from({ length: selectedBook.chapters }, (_, i) => i + 1).map((ch) => (
+                      <button key={ch} onClick={() => handleLoadChapter(selectedBook, ch)}
+                        className="py-3 text-sm font-body font-bold bg-secondary text-foreground hover:bg-primary hover:text-primary-foreground transition-all border border-border rounded-sm">
+                        {ch}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+
+              ) : (
+                /* STEP 1: Book list */
+                <motion.div key="books" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -20 }}>
+                  <p className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground mb-4">
+                    Select a book to read
+                  </p>
+                  <div className="space-y-0 border-t border-border">
+                    {popularBooks.map((book) => (
+                      <button key={book.name}
+                        onClick={() => { setSelectedBook(book); setSelectedChapter(null); setPassage(null); setBookError(""); }}
+                        className="w-full flex items-center justify-between px-4 py-3.5 text-sm font-body font-bold text-foreground border-b border-border hover:bg-secondary transition-all">
+                        <span>{book.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-body text-muted-foreground">{book.chapters} ch</span>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ))}
-            </div>
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Passage display */}
-          <div className="flex-1 md:bg-card md:border md:border-border md:p-6 mt-4 md:mt-0 min-h-[400px]">
-            {bookLoading ? (
-              <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
-            ) : bookError ? (
-              <div className="text-center py-16">
-                <p className="text-sm font-body text-destructive">{bookError}</p>
-                <button onClick={() => selectedBook && selectedChapter && handleLoadChapter(selectedBook, selectedChapter)}
-                  className="mt-4 px-4 py-2 text-[10px] font-body font-bold uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90 transition-all">
-                  Try Again
-                </button>
+          {/* ── DESKTOP: Side-by-side layout ── */}
+          <div className="hidden md:flex md:gap-6 md:items-start">
+            {/* Book list + chapter grid */}
+            <div className="w-64 shrink-0 sticky top-20">
+              <p className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground mb-3 px-1">
+                Select a book to read
+              </p>
+              <div className="max-h-[70vh] overflow-y-auto border-t border-border">
+                {popularBooks.map((book) => (
+                  <div key={book.name}>
+                    <button
+                      onClick={() => { 
+                        if (selectedBook?.name === book.name) {
+                          setSelectedBook(null); setSelectedChapter(null); setPassage(null); setBookError("");
+                        } else {
+                          setSelectedBook(book); setSelectedChapter(null); setPassage(null); setBookError("");
+                        }
+                      }}
+                      className={`w-full text-left px-4 py-3 text-sm font-body font-bold transition-all border-b border-border ${
+                        selectedBook?.name === book.name ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"
+                      }`}>
+                      <div className="flex items-center justify-between">
+                        <span>{book.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] font-body ${selectedBook?.name === book.name ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{book.chapters} ch</span>
+                          <motion.div animate={{ rotate: selectedBook?.name === book.name ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                            <ChevronDown className={`w-4 h-4 ${selectedBook?.name === book.name ? "text-primary-foreground" : "text-muted-foreground"}`} />
+                          </motion.div>
+                        </div>
+                      </div>
+                    </button>
+                    
+                    <AnimatePresence>
+                      {selectedBook?.name === book.name && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                          className="overflow-hidden bg-secondary/50 border-b border-border">
+                          <div className="p-3">
+                            <p className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground mb-2">Select Chapter</p>
+                            <div className="grid grid-cols-8 gap-1.5">
+                              {Array.from({ length: book.chapters }, (_, i) => i + 1).map((ch) => (
+                                <button key={ch} onClick={() => handleLoadChapter(book, ch)}
+                                  className={`py-2 text-xs font-body font-bold transition-all ${
+                                    selectedChapter === ch ? "bg-primary text-primary-foreground" : "bg-background text-foreground hover:bg-primary/20 border border-border"
+                                  }`}>
+                                  {ch}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ))}
               </div>
-            ) : passage && selectedBook && selectedChapter ? (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <div className="flex items-center gap-3 mb-4 border-b-2 border-foreground pb-2">
-                  <BookOpen className="w-4 h-4 text-primary" />
-                  <h2 className="font-display text-lg font-bold text-foreground">{selectedBook.name} {selectedChapter}</h2>
-                  <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground ml-auto">
-                    {passage.translation_name || "WEB"}
-                  </span>
-                </div>
+            </div>
 
-                <div className="flex items-center justify-between mb-4">
-                  <button onClick={() => navigateChapter(-1)} disabled={bookLoading || selectedChapter <= 1}
-                    className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-body font-bold uppercase tracking-wider border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-30">
-                    <ChevronLeft className="w-3.5 h-3.5" /> Prev
-                  </button>
-                  <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground">Ch. {selectedChapter}</span>
-                  <button onClick={() => navigateChapter(1)} disabled={bookLoading || selectedChapter >= selectedBook.chapters}
-                    className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-body font-bold uppercase tracking-wider border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-30">
-                    Next <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                {renderBibleVerses(passage, selectedBook.name, selectedChapter)}
-
-                <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
-                  <button onClick={() => navigateChapter(-1)} disabled={bookLoading || selectedChapter <= 1}
-                    className="flex items-center gap-1.5 px-4 py-2.5 text-[10px] font-body font-bold uppercase tracking-wider bg-foreground text-background hover:bg-primary transition-all disabled:opacity-30">
-                    <ChevronLeft className="w-3.5 h-3.5" /> Previous
-                  </button>
-                  <button onClick={() => navigateChapter(1)} disabled={bookLoading || selectedChapter >= selectedBook.chapters}
-                    className="flex items-center gap-1.5 px-4 py-2.5 text-[10px] font-body font-bold uppercase tracking-wider bg-foreground text-background hover:bg-primary transition-all disabled:opacity-30">
-                    Next <ChevronRight className="w-3.5 h-3.5" />
+            {/* Passage display */}
+            <div className="flex-1 bg-card border border-border p-6 min-h-[400px]">
+              {bookLoading ? (
+                <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+              ) : bookError ? (
+                <div className="text-center py-16">
+                  <p className="text-sm font-body text-destructive">{bookError}</p>
+                  <button onClick={() => selectedBook && selectedChapter && handleLoadChapter(selectedBook, selectedChapter)}
+                    className="mt-4 px-4 py-2 text-[10px] font-body font-bold uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90 transition-all">
+                    Try Again
                   </button>
                 </div>
-              </motion.div>
-            ) : (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 bg-foreground flex items-center justify-center mx-auto mb-4">
-                  <BookOpen className="w-6 h-6 text-primary" strokeWidth={1.5} />
+              ) : passage && selectedBook && selectedChapter ? (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <div className="flex items-center gap-3 mb-4 border-b-2 border-foreground pb-2">
+                    <BookOpen className="w-4 h-4 text-primary" />
+                    <h2 className="font-display text-lg font-bold text-foreground">{selectedBook.name} {selectedChapter}</h2>
+                    <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground ml-auto">
+                      {passage.translation_name || "WEB"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <button onClick={() => navigateChapter(-1)} disabled={bookLoading || selectedChapter <= 1}
+                      className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-body font-bold uppercase tracking-wider border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-30">
+                      <ChevronLeft className="w-3.5 h-3.5" /> Prev
+                    </button>
+                    <span className="text-[10px] font-body font-bold uppercase tracking-wider text-muted-foreground">Ch. {selectedChapter}</span>
+                    <button onClick={() => navigateChapter(1)} disabled={bookLoading || selectedChapter >= selectedBook.chapters}
+                      className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-body font-bold uppercase tracking-wider border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all disabled:opacity-30">
+                      Next <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  {renderBibleVerses(passage, selectedBook.name, selectedChapter)}
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+                    <button onClick={() => navigateChapter(-1)} disabled={bookLoading || selectedChapter <= 1}
+                      className="flex items-center gap-1.5 px-4 py-2.5 text-[10px] font-body font-bold uppercase tracking-wider bg-foreground text-background hover:bg-primary transition-all disabled:opacity-30">
+                      <ChevronLeft className="w-3.5 h-3.5" /> Previous
+                    </button>
+                    <button onClick={() => navigateChapter(1)} disabled={bookLoading || selectedChapter >= selectedBook.chapters}
+                      className="flex items-center gap-1.5 px-4 py-2.5 text-[10px] font-body font-bold uppercase tracking-wider bg-foreground text-background hover:bg-primary transition-all disabled:opacity-30">
+                      Next <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </motion.div>
+              ) : (
+                <div className="text-center py-16">
+                  <div className="w-16 h-16 bg-foreground flex items-center justify-center mx-auto mb-4">
+                    <BookOpen className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                  </div>
+                  <p className="font-display text-xl font-black text-foreground tracking-tight">
+                    READ THE <span className="italic text-primary">BIBLE</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground font-body mt-2 max-w-[260px] mx-auto">
+                    Select a book and chapter to start reading.
+                  </p>
                 </div>
-                <p className="font-display text-xl font-black text-foreground tracking-tight">
-                  READ THE <span className="italic text-primary">BIBLE</span>
-                </p>
-                <p className="text-xs text-muted-foreground font-body mt-2 max-w-[260px] mx-auto">
-                  Select a book and chapter to start reading. Includes popular books and deuterocanonical texts.
-                </p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}
