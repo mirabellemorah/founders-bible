@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import WelcomePage from "@/pages/WelcomePage";
@@ -15,12 +15,6 @@ import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function OnboardingGuard({ children }: { children: React.ReactNode }) {
-  const onboarded = localStorage.getItem("fb-onboarded") === "true";
-  if (!onboarded) return <Navigate to="/welcome" replace />;
-  return <>{children}</>;
-}
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -30,13 +24,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/welcome" element={<WelcomePage />} />
-          <Route
-            element={
-              <OnboardingGuard>
-                <AppLayout />
-              </OnboardingGuard>
-            }
-          >
+          <Route element={<AppLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/library" element={<LibraryPage />} />
